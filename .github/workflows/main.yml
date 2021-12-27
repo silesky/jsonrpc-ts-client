@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
+      - name: Install ESBuild
+        run: npm install esbuild
+
       - name: Install Dependencies
         uses: bahmutov/npm-install@v1
         with:
