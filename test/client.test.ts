@@ -1,5 +1,4 @@
 import { JsonRpcClient } from "../src";
-// @ts-ignore
 import { JSONRPC_URL, mockResponse, waitForRequest } from "./server";
 import * as uuid from "uuid";
 import * as fixtures from "./fixtures";
