@@ -25,9 +25,7 @@ jobs:
         run: npm install esbuild
 
       - name: Install Dependencies
-        uses: bahmutov/npm-install@v1
-        with:
-          install-command: npm ci
+        run: npm install
 
       - name: Lint
         run: npm run lint

@@ -34,16 +34,6 @@
   "name": "jsonrpc-ts-client",
   "author": "Seth Silesky",
   "module": "dist/jsonrpc-ts-client.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/jsonrpc-ts-client.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/jsonrpc-ts-client.esm.js",
-      "limit": "10 KB"
-    }
-  ],
   "dependencies": {
     "debug": "^4.3.3"
   },
