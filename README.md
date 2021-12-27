@@ -1,5 +1,7 @@
 ### A modern typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification).
 
+![Build Status](https://img.shields.io/github/workflow/status/silesky/jsonrpc-ts-client/CI/main?label=build)
+
 Check out the [Open RPC Ecosystem](https://open-rpc.org/) for more tools.
 
 ### Installation
