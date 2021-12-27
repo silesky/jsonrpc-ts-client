@@ -7,8 +7,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node: ["12.x"]
-        os: [ubuntu-latest]
+        os:
+          - ubuntu-latest
+        node:
+          - 12.x
 
     steps:
       - name: Checkout repo
@@ -19,8 +21,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Install deps and build (with cache)
+      - name: Install Dependencies
         uses: bahmutov/npm-install@v1
+        with:
+          install-command: npm ci
 
       - name: Lint
         run: npm run lint
