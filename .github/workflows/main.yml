@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Install ESBuild
+      - name: Install esbuild
         run: npm install esbuild
 
       - name: Install Dependencies
