@@ -1,6 +1,5 @@
 export const payload = {
-  id: 1,
-  name: "jhon",
+  name: "john",
 };
 export const response = {
   id: 1,

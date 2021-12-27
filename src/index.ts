@@ -1,1 +1,16 @@
-export * from "./client";
+export {
+  ApiClientConfig,
+  JsonRpcClient,
+  JsonRpcCreateConfig,
+  JsonRpcClientCallOptions,
+} from "./client";
+
+export {
+  InvalidJsonRpcResponseError,
+  JsonRpcCall,
+  JsonRpcError,
+  JsonRpcResponse,
+  JsonRpcParams,
+  JsonRpcResponseError,
+  JsonRpcResponseSuccess,
+} from "./utils/jsonrpc";

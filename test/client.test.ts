@@ -7,15 +7,10 @@ let client!: JsonRpcClient;
 beforeEach(() => {
   client = new JsonRpcClient({
     idGeneratorFn: uuid.v4,
-    baseUrl: JSONRPC_URL,
+    url: JSONRPC_URL,
   });
 });
 
-/**
- *
- * TODO:
- * Improve tests =)
- */
 it("handles valid jsonrpc success responses", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withSuccess.response);
@@ -64,6 +59,27 @@ it("does not throw errors with jsonrpc error responses with 4xx status code", as
   }
 });
 
+it("handles batch jsonrpc success responses", async () => {
+  expect.assertions(2);
+  mockResponse(fixtures.batchWithSuccess.response);
+  const responses = await client.execBatch<
+    [
+      typeof fixtures.batchWithSuccess.payload1,
+      typeof fixtures.batchWithSuccess.payload2
+    ]
+  >([
+    { params: { foo: 123 }, method: "get_foo" },
+    { params: { bar: 123 }, method: "get_bar" },
+  ]);
+  const [r1, r2] = responses;
+  if (r1.isSuccess()) {
+    expect(r1.result).toEqual(fixtures.batchWithSuccess.payload1);
+  }
+  if (r2.isSuccess()) {
+    expect(r2.result).toEqual(fixtures.batchWithSuccess.payload2);
+  }
+});
+
 it("throws errors in response to a network error or response that does not match the jsonrpc spec", async () => {
   expect.assertions(1);
   mockResponse({ foo: "bad-jsonrpc-response" }, { status: 400 });
@@ -100,7 +116,7 @@ describe("configuration", () => {
   it("will not pass an ID if no generator function nor arguments are passed in ", async () => {
     // expect.assertions(2);
     client = new JsonRpcClient({
-      baseUrl: JSONRPC_URL,
+      url: JSONRPC_URL,
       idGeneratorFn: undefined,
     });
     mockResponse(fixtures.withSuccess.response);

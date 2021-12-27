@@ -29,7 +29,6 @@ jobs:
         with:
           install-command: npm ci
 
-
       - name: Lint
         run: npm run lint
 
@@ -37,4 +36,4 @@ jobs:
         run: npm run test --ci --coverage --maxWorkers=2
 
       - name: Build
-        run: num run build
+        run: npm run build
