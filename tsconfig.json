@@ -1,8 +1,7 @@
 {
   // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
   "include": [
-    "src",
-    "types"
+    "**/*.ts"
   ],
   "compilerOptions": {
     "target": "es2015",
@@ -14,7 +13,7 @@
     "importHelpers": true,
     "declaration": true,
     "sourceMap": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
