@@ -15,7 +15,7 @@ export function exists<T>(v: T): v is NonNullable<T> {
  */
 export function assertExists<T>(
   v: T,
-  name = 'some value'
+  name = "some value"
 ): asserts v is NonNullable<T> {
   if (!exists(v)) {
     const res = `${name} does not exist!`;
@@ -44,7 +44,7 @@ export function isCompletelyNullOrEmptyObject<T>(object: T): boolean {
 }
 
 export const isObject = (v: unknown): v is object => {
-  return v !== null && typeof v === 'object';
+  return v !== null && typeof v === "object";
 };
 
 export const hasProperties = <T extends object, K extends string>(

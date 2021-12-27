@@ -1,10 +1,10 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
-import Debug from 'debug';
-import { hasProperties, isObject } from './utils/exists';
-import { Either, ErrorResponse, SuccessResponse } from './utils/either';
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
+import Debug from "debug";
+import { hasProperties, isObject } from "./utils/exists";
+import { Either, ErrorResponse, SuccessResponse } from "./utils/either";
 
 /* run via npm test DEBUG=jsonrpc-ts-client etc */
-const debug = Debug('jsonrpc-ts-client');
+const debug = Debug("jsonrpc-ts-client");
 
 type ErrorData =
   | {
@@ -19,11 +19,11 @@ export interface JsonRpcError {
 }
 
 export const isJsonRpcError = (v: object): v is JsonRpcError => {
-  return hasProperties(v, 'code', 'message');
+  return hasProperties(v, "code", "message");
 };
 
 interface BaseJsonRpcResponse {
-  jsonrpc: '2.0';
+  jsonrpc: "2.0";
   id?: string;
 }
 
@@ -38,13 +38,13 @@ export interface JsonRpcResponseError extends BaseJsonRpcResponse {
 export const isJsonRpcResponseError = <T>(
   value: JsonRpcResponse<T>
 ): value is JsonRpcResponseError => {
-  return 'error' in value && value.error !== null;
+  return "error" in value && value.error !== null;
 };
 
 type JsonRpcResponse<T> = JsonRpcResponseSuccess<T> | JsonRpcResponseError;
 
 export class InvalidJsonRpcResponseError extends Error {
-  type = 'INVALID_JSONRPC_RESPONSE';
+  type = "INVALID_JSONRPC_RESPONSE";
   constructor(message: string) {
     super(
       `Your server spec must conform to: https://www.jsonrpc.org/specification. ${message}`
@@ -60,23 +60,23 @@ function assertJsonRpcReply<T>(v: unknown): asserts v is JsonRpcResponse<T> {
       `Response is not object, got: ${JSON.stringify(v, undefined, 2)}`
     );
   }
-  if (!hasProperties(v, 'jsonrpc')) {
+  if (!hasProperties(v, "jsonrpc")) {
     throw new InvalidJsonRpcResponseError(
       `Invalid response ${JSON.stringify(v, undefined, 2)}`
     );
   }
-  if (hasProperties(v, 'result', 'error')) {
+  if (hasProperties(v, "result", "error")) {
     if (v.result && v.error) {
       throw new InvalidJsonRpcResponseError(
-        'Result and error member should not exist together (https://www.jsonrpc.org/specification#5)'
+        "Result and error member should not exist together (https://www.jsonrpc.org/specification#5)"
       );
     }
   }
-  if (hasProperties(v, 'error')) {
+  if (hasProperties(v, "error")) {
     if (!isObject(v.error)) {
       throw new InvalidJsonRpcResponseError('"error" field should be object');
     }
-    if (!hasProperties(v.error, 'code', 'message')) {
+    if (!hasProperties(v.error, "code", "message")) {
       throw new InvalidJsonRpcResponseError(
         `invalid "error" field shape: ${JSON.stringify(v.error, undefined, 2)}`
       );
@@ -87,7 +87,7 @@ function assertJsonRpcReply<T>(v: unknown): asserts v is JsonRpcResponse<T> {
 type Parameters = Record<string, any>;
 
 export class JsonRpcCall<Params extends Parameters> {
-  public jsonrpc = '2.0';
+  public jsonrpc = "2.0";
   constructor(
     public method: string,
     public params: Params,
@@ -112,10 +112,10 @@ export class ApiClientConfig {
    * Asserts that the current object is valid; this is useful in non-typescript environments.
    */
   public validate() {
-    if (this.baseUrl && this.url && typeof this.idGeneratorFn === 'function') {
+    if (this.baseUrl && this.url && typeof this.idGeneratorFn === "function") {
       return;
     } else {
-      throw new Error('Invariant Error: Invalid Configuration!');
+      throw new Error("Invariant Error: Invalid Configuration!");
     }
   }
 
@@ -133,7 +133,7 @@ export class ApiClientConfig {
 
   constructor(options: ApiClientCreateConfigOptions) {
     this.baseUrl = options.baseUrl;
-    this.url = options.url || '/';
+    this.url = options.url || "/";
     this.headers = options.headers;
     this.idGeneratorFn = options.idGeneratorFn;
   }
@@ -154,7 +154,7 @@ export class JsonRpcClient {
   buildAxiosClient(config: ApiClientConfig) {
     return axios.create({
       baseURL: config.baseUrl,
-      url: config.url || '/',
+      url: config.url || "/",
       headers: config.headers,
       validateStatus: (_status) => true, // never throw errors in response to status codes
     });
@@ -188,7 +188,7 @@ export class JsonRpcClient {
       );
       const axiosResponse: AxiosResponse<unknown> | AxiosError =
         await this.#client({
-          method: 'post',
+          method: "post",
           data,
         });
       const axiosData = axiosResponse.data;

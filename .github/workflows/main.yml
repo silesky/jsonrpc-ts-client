@@ -10,7 +10,7 @@ jobs:
         os:
           - ubuntu-latest
         node:
-          - 14.x
+          - 12.x
 
     steps:
       - name: Checkout repo
@@ -25,7 +25,10 @@ jobs:
         run: npm install esbuild
 
       - name: Install Dependencies
-        run: npm install
+        uses: bahmutov/npm-install@v1
+        with:
+          install-command: npm ci
+
 
       - name: Lint
         run: npm run lint

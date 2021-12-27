@@ -1,10 +1,10 @@
-import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { setupServer } from "msw/node";
+import { rest } from "msw";
 
 // instantiate server without handlers
 export const server = setupServer();
 
-export const JSONRPC_URL = 'http://foo:8888/jsonrpc';
+export const JSONRPC_URL = "http://foo:8888/jsonrpc";
 
 type Options = {
   status?: number;
@@ -18,12 +18,12 @@ export const mockResponse = (data: any, options: Options = {}) => {
   );
 };
 
-export function waitForRequest() {
+export async function waitForRequest() {
   return new Promise((resolve, reject) => {
-    server.events.on('request:match', (req) => {
+    server.events.on("request:match", (req) => {
       resolve(req);
     });
-    server.events.on('request:unhandled', (req) => {
+    server.events.on("request:unhandled", (req) => {
       reject(
         new Error(`The ${req.method} ${req.url.href} request was unhandled.`)
       );

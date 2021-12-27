@@ -15,7 +15,7 @@
     "build": "dts build",
     "test": "dts test",
     "test:debug": "DEBUG=jsonrpc-ts-client npm test",
-    "lint": "dts lint",
+    "lint": "eslint .",
     "prepare": "dts build"
   },
   "husky": {
@@ -23,26 +23,23 @@
       "pre-commit": "dts lint"
     }
   },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
   "name": "jsonrpc-ts-client",
   "author": "Seth Silesky",
   "module": "dist/jsonrpc-ts-client.esm.js",
   "dependencies": {
+    "axios": "^0.24.0",
     "debug": "^4.3.3"
-  },
-  "peerDependencies": {
-    "axios": "^0.24.0"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/jest": "^27.0.3",
     "@types/uuid": "^8.3.3",
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
     "dts-cli": "^1.1.3",
+    "eslint": "^8.5.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-prettier": "^4.0.0",
     "husky": "^7.0.4",
     "msw": "^0.36.3",
     "prettier": "^2.5.1",

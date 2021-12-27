@@ -4,9 +4,9 @@ abstract class EitherApi {
     onSuccess: (v: Success) => Success2
   ): Either<Error, Success2> {
     switch (this.type) {
-      case 'error':
+      case "error":
         return new ErrorResponse(this.error);
-      case 'success':
+      case "success":
         return new SuccessResponse(onSuccess(this.result));
     }
   }
@@ -16,9 +16,9 @@ abstract class EitherApi {
     eitherFn: Either<Error, (value: Success) => Either<Error, Success2>>
   ): Either<Error, Success2> {
     switch (this.type) {
-      case 'error':
+      case "error":
         return new ErrorResponse(this.error);
-      case 'success':
+      case "success":
         if (eitherFn.isSuccess()) {
           return eitherFn.result(this.result);
         } else {
@@ -30,7 +30,7 @@ abstract class EitherApi {
   isError<Error, Success>(
     this: Either<Error, Success>
   ): this is ErrorResponse<Error> {
-    return this.type === 'error';
+    return this.type === "error";
   }
 
   isSuccess<Error, Success>(
@@ -72,7 +72,7 @@ abstract class EitherApi {
  * Class representing "right" (success case)
  */
 export class SuccessResponse<T> extends EitherApi {
-  public readonly type = 'success';
+  public readonly type = "success";
 
   constructor(public result: T) {
     super();
@@ -83,7 +83,7 @@ export class SuccessResponse<T> extends EitherApi {
  * Class representing "left" (failure case)
  */
 export class ErrorResponse<T> extends EitherApi {
-  public readonly type = 'error';
+  public readonly type = "error";
 
   constructor(public error: T) {
     super();
