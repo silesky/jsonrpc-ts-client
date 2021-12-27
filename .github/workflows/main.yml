@@ -10,7 +10,7 @@ jobs:
         os:
           - ubuntu-latest
         node:
-          - 12.x
+          - 14.x
 
     steps:
       - name: Checkout repo
