@@ -140,7 +140,7 @@ export class JsonRpcClient {
     }
   };
 
-  execBatch = async <Result extends [...any]>(
+  execBatch = async <Result extends [...unknown[]]>(
     calls: JsonRpcClientCallOptions[]
   ) => {
     try {
