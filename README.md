@@ -1,6 +1,6 @@
 ### Warning: this is in alpha.
 
-### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification).
+### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification). The goal of this project is to provide maximum ergonomics for typescript projects (autocomplete all the things!). This app could be used standalone, or as a dependency for an OpenRPC TS SDK generator.
 
 ![Build Status](https://img.shields.io/github/workflow/status/silesky/jsonrpc-ts-client/CI/main?label=build)
 
@@ -94,6 +94,7 @@ import JSONRPC from 'jsonrpc-ts-client'
 type MyApiContract = {
   getUser: (params: UserParamsDto) => UserDto;
   getConfig: () => ConfigDto,
+  getProduct: (productId: string) => ProductDto,
 };
 
 // pass in your api contract to get type-safety and autocomplete
@@ -102,9 +103,14 @@ const client = new JsonRpcClient<MyApiContract>({
   url: JSONRPC_URL,
 });
 
-   const foo = await newClient.execContract({
-    method: "getUser", // autocomplete!
-    params: { userId: 123 }, // autocomplete!
-  });
+const result = await newClient.execContract({
+  method: "getUser", // autocomplete!
+  params: { userId: 123 }, // autocomplete!
+});
+
+if (result.isSuccess()) {
+  console.log(result.user.name)
+  console.log(result.user.id)
+}
 
 ```
