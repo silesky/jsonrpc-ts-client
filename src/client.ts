@@ -102,7 +102,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
    * @param id - Request ID
    * @param configOverrides - Override the base client configurations
    */
-  public async exec<Result extends object>(
+  async exec<Result extends object>(
     method: string,
     params: JsonRpcParams,
     id?: string,
@@ -144,7 +144,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
    *
    * Execute a JSON-RPC Method call when using a contract declaration.
    */
-  public execContract<
+  async execContract<
     // This would be preferable to implement with vanilla method overloading.
     // Todo: support "batch"
     Method extends Api extends undefined ? string : keyof Api,
@@ -160,9 +160,9 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
     return this.exec<ReturnType<Api[Method]>>(method as string, params, id);
   }
 
-  execBatch = async <Result extends [...unknown[]]>(
+  async execBatch<Result extends [...unknown[]]>(
     calls: JsonRpcClientCallOptions[]
-  ) => {
+  ) {
     try {
       const data = calls.map(
         (el) =>
@@ -192,5 +192,5 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
       debug(err);
       throw err;
     }
-  };
+  }
 }
