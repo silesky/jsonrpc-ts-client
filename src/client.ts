@@ -23,6 +23,7 @@ export interface JsonRpcCreateConfig {
 export class ApiClientConfig {
   url: string;
   headers?: Record<string, string>;
+
   idGeneratorFn?: () => string;
 
   /**
@@ -59,10 +60,13 @@ export interface JsonRpcClientCallOptions {
   id?: string;
 }
 
+type JsonRpcApi = {
+  [methodName: string]: (params: any) => any;
+};
 /**
  * Instantiate this class to make requests to a JSON-RPC endpoint (or endpoints).
  */
-export class JsonRpcClient {
+export class JsonRpcClient<Api extends JsonRpcApi = {}> {
   #client: AxiosInstance;
   config: ApiClientConfig;
 
@@ -82,11 +86,6 @@ export class JsonRpcClient {
     });
   }
 
-  /**
-   *
-   * @param axiosData
-   * @returns
-   */
   #jsonRpcResponseToEither<T extends object>(
     axiosData: JsonRpcResponse<T>
   ): Either<JsonRpcError, T> {
@@ -101,14 +100,14 @@ export class JsonRpcClient {
    * @param params - Data that will be sent in the request body to the JSON-RPC endpoint
    * @param id - Request ID
    * @param configOverrides - Override the base client configurations
-   * @returns
    */
-  exec = async <Result extends object>(
+
+  public async exec<Result extends object>(
     method: string,
     params: JsonRpcParams,
     id?: string,
     configOverrides?: Partial<JsonRpcCreateConfig>
-  ): Promise<Either<JsonRpcError, Result>> => {
+  ): Promise<Either<JsonRpcError, Result>> {
     try {
       if (configOverrides) {
         this.config.merge(configOverrides);
@@ -138,7 +137,28 @@ export class JsonRpcClient {
       debug(err);
       throw err;
     }
-  };
+  }
+
+  /**
+   * @experimental
+   *
+   * Execute a JSON-RPC Method call when using a contract declaration.
+   */
+  public execContract<
+    // This would be preferable to implement with vanilla method overloading.
+    // Todo: support "batch"
+    Method extends Api extends undefined ? string : keyof Api,
+    ReqResFn extends Method extends keyof Api // get value from interface
+      ? GetElementByIndex<Api, Method>
+      : never
+  >(callOptions: {
+    method: Method;
+    params: Method extends keyof Api ? Parameters<ReqResFn>[0] : JsonRpcParams;
+    id?: string;
+  }): Promise<Either<JsonRpcError, ReturnType<ReqResFn>>> {
+    const { method, params, id } = callOptions;
+    return this.exec<ReturnType<Api[Method]>>(method as string, params, id);
+  }
 
   execBatch = async <Result extends [...unknown[]]>(
     calls: JsonRpcClientCallOptions[]
@@ -183,5 +203,3 @@ type GetElementByIndex<T, Index> = Index extends keyof T ? T[Index] : never;
 type MapEither<T extends [...any[]]> = {
   [Index in keyof T]: Either<JsonRpcError, GetElementByIndex<T, Index>>;
 } & {};
-
-// type F = Either<JsonRpcError, Result>;

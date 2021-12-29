@@ -15,8 +15,9 @@
     "build": "dts build",
     "test": "dts test",
     "test:debug": "DEBUG=jsonrpc-ts-client npm test",
-    "lint": "eslint .",
-    "prepare": "dts build"
+    "lint": "npm run tsc:check && eslint .",
+    "prepare": "dts build",
+    "tsc:check": "tsc --noEmit"
   },
   "husky": {
     "hooks": {

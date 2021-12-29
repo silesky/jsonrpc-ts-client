@@ -11,7 +11,7 @@ Check out the [Open RPC Ecosystem](https://open-rpc.org/) for more tools.
 | ---------------------------- | -------- |
 | Isomorphism                  |  ✅      |
 | Batch Support                |  ✅      |
-| Interface Support            |  Future    |
+| Contract Support            |   Experimental |
 
 ### Installation
 ```
@@ -83,4 +83,28 @@ const client = new JSONRPC({
     { method: "get_user",  params: { userId: 123 }, id: "foo" },
     { method: "get_config" },
   ]);
+```
+
+## API Contract Declaration Support (experimental)
+```ts
+
+import JSONRPC from 'jsonrpc-ts-client'
+
+
+type MyApiContract = {
+  getUser: (params: UserParamsDto) => UserDto;
+  getConfig: () => ConfigDto,
+};
+
+// pass in your api contract to get type-safety and autocomplete
+const client = new JsonRpcClient<MyApiContract>({
+  idGeneratorFn: uuid.v4,
+  url: JSONRPC_URL,
+});
+
+   const foo = await newClient.execContract({
+    method: "getUser", // autocomplete!
+    params: { userId: 123 }, // autocomplete!
+  });
+
 ```

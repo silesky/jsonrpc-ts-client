@@ -11,6 +11,55 @@ beforeEach(() => {
   });
 });
 
+it("handles contracts", async () => {
+  type GetFooRequestDto = {
+    fooId: number;
+  };
+  type GetFooResponseDto = {
+    name: "foo";
+  };
+  type MyApiContract = {
+    getFoo: (params: GetFooRequestDto) => GetFooResponseDto;
+  };
+  const newClient = new JsonRpcClient<MyApiContract>({
+    idGeneratorFn: uuid.v4,
+    url: JSONRPC_URL,
+  });
+  expect.assertions(1);
+  mockResponse(fixtures.withSuccess.response);
+
+  const foo = await newClient.execContract({
+    method: "getFoo",
+    params: { fooId: 123 },
+  });
+
+  if (foo.isSuccess()) {
+    expect(foo).toEqual({
+      result: fixtures.withSuccess.payload,
+      type: "success",
+    });
+
+    // TODO: use dtslint
+
+    // expect no error = name should be string
+    foo.result.name;
+  }
+
+  /** dtslint example */
+  // @ts-expect-error
+  newClient.execContract({ method: "getFoo" }); // no params
+
+  // @ts-expect-error
+  newClient.execContract({ method: "bar", params: { fooId: 123 } }); // invalid method
+
+  newClient.execContract({
+    // invalid params
+    method: "getFoo",
+    // @ts-expect-error
+    params: { does_not_exist: false },
+  });
+});
+
 it("handles valid jsonrpc success responses", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withSuccess.response);
@@ -26,7 +75,9 @@ it("handles valid jsonrpc success responses", async () => {
 it("handles valid jsonrpc error responses", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withError.response);
-  const foo = await client.exec("my_not_found_method", { foo: 123 });
+  const foo = await client.exec<{ name: string }>("my_not_found_method", {
+    foo: 123,
+  });
   if (foo.isError()) {
     expect(foo).toEqual({
       error: fixtures.withError.response.error,
