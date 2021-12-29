@@ -10,6 +10,7 @@ import {
   JsonRpcResponse,
 } from "./utils/jsonrpc";
 import { Either, ErrorResponse, SuccessResponse } from "./utils/either";
+import { GetElementByIndex, MapEither } from "./utils/ts";
 
 /* run via npm test DEBUG=jsonrpc-ts-client etc */
 const debug = Debug("jsonrpc-ts-client");
@@ -101,7 +102,6 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
    * @param id - Request ID
    * @param configOverrides - Override the base client configurations
    */
-
   public async exec<Result extends object>(
     method: string,
     params: JsonRpcParams,
@@ -194,12 +194,3 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
     }
   };
 }
-
-type GetElementByIndex<T, Index> = Index extends keyof T ? T[Index] : never;
-
-/**
- * MapEither<[Foo, Bar]> -> [Either<JsonRpcError, Foo>, Either<JsonRpcError, Bar>]
- */
-type MapEither<T extends [...any[]]> = {
-  [Index in keyof T]: Either<JsonRpcError, GetElementByIndex<T, Index>>;
-} & {};
