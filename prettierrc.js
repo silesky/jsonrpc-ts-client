@@ -4,7 +4,27 @@ module.exports = {
   tabWidth: 2,
   proseWrap: "preserve",
   semi: true,
-  parser: "typescript",
   arrowParens: "always",
   singleQuote: true,
+  endOfLine: "auto",
+  overrides: [
+    {
+      files: "*.json",
+      options: {
+        parser: "json",
+      },
+    },
+    {
+      files: "*.js",
+      options: {
+        parser: "espree",
+      },
+    },
+    {
+      files: "*.ts?x",
+      options: {
+        parser: "typescript",
+      },
+    },
+  ],
 };
