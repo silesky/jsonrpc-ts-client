@@ -28,13 +28,10 @@ it("handles contracts", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withSuccess.response);
 
-  const foo = await newClient.execContract({
-    method: "getFoo",
-    params: { fooId: 123 },
-  });
+  const response = await newClient.execContract("getFoo", { fooId: 123 });
 
-  if (foo.isSuccess()) {
-    expect(foo).toEqual({
+  if (response.isSuccess()) {
+    expect(response).toEqual({
       result: fixtures.withSuccess.payload,
       type: "success",
     });
@@ -42,22 +39,18 @@ it("handles contracts", async () => {
     // TODO: use dtslint
 
     // expect no error = name should be string
-    foo.result.name;
+    response.result.name;
   }
 
   /** dtslint example */
   // @ts-expect-error
-  newClient.execContract({ method: "getFoo" }); // no params
+  newClient.execContract("getFoo"); // no params
 
   // @ts-expect-error
-  newClient.execContract({ method: "bar", params: { fooId: 123 } }); // invalid method
+  newClient.execContract("bar", { fooId: 123 }); // invalid method
 
-  newClient.execContract({
-    // invalid params
-    method: "getFoo",
-    // @ts-expect-error
-    params: { does_not_exist: false },
-  });
+  // @ts-expect-error
+  newClient.execContract("getFoo", { does_not_exist: false });
 });
 
 it("handles valid jsonrpc success responses", async () => {

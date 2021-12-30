@@ -151,12 +151,11 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
     ReqResFn extends Method extends keyof Api // get value from interface
       ? GetElementByIndex<Api, Method>
       : never
-  >(callOptions: {
-    method: Method;
-    params: Method extends keyof Api ? Parameters<ReqResFn>[0] : JsonRpcParams;
-    id?: string;
-  }): Promise<Either<JsonRpcError, ReturnType<ReqResFn>>> {
-    const { method, params, id } = callOptions;
+  >(
+    method: Method,
+    params: Method extends keyof Api ? Parameters<ReqResFn>[0] : JsonRpcParams,
+    id?: string
+  ): Promise<Either<JsonRpcError, ReturnType<ReqResFn>>> {
     return this.exec<ReturnType<Api[Method]>>(method as string, params, id);
   }
 

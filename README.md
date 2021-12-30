@@ -103,10 +103,7 @@ const client = new JsonRpcClient<MyApiContract>({
   url: JSONRPC_URL,
 });
 
-const result = await newClient.execContract({
-  method: "getUser", // autocomplete!
-  params: { userId: 123 }, // autocomplete!
-});
+const result = await client.execContract("getUser", { userId: 123 }); // autocomplete!
 
 if (result.isSuccess()) {
   console.log(result.user.name)
