@@ -64,10 +64,16 @@ export interface JsonRpcClientCallOptions {
 type JsonRpcApi = {
   [methodName: string]: (params: any) => any;
 };
+
+type EmptyObject = Record<string, never>;
+
+type KeyofOrDefault<T> = T extends EmptyObject ? string : keyof T;
+
 /**
  * Instantiate this class to make requests to a JSON-RPC endpoint (or endpoints).
  */
-export class JsonRpcClient<Api extends JsonRpcApi = {}> {
+
+export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
   #client: AxiosInstance;
   config: ApiClientConfig;
 
@@ -87,7 +93,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
     });
   }
 
-  #jsonRpcResponseToEither<T extends object>(
+  #jsonRpcResponseToEither<T>(
     axiosData: JsonRpcResponse<T>
   ): Either<JsonRpcError, T> {
     return isJsonRpcResponseError(axiosData)
@@ -102,32 +108,21 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
    * @param id - Request ID
    * @param configOverrides - Override the base client configurations
    */
-
-  async exec<
-    // This would be preferable to implement with vanilla method overloading.
-    // Todo: support "batch"
-    Method extends Api extends undefined ? string : keyof Api,
-    ReqResFn extends Method extends keyof Api // get value from interface
-      ? GetElementByIndex<Api, Method>
-      : never
-  >(
-    method: Method,
-    params: Parameters<ReqResFn>[0],
+  async exec<ApiResponse, M extends KeyofOrDefault<Api> = any>(
+    method: M,
+    params: Api extends EmptyObject
+      ? JsonRpcParams
+      : Parameters<GetElementByIndex<Api, M>>[0],
     id?: string,
     configOverrides?: Partial<JsonRpcCreateConfig>
-  ): Promise<Either<JsonRpcError, ReturnType<ReqResFn>>>;
-  async exec<Result>(
-    method: string,
-    params: JsonRpcParams,
-    id?: string,
-    configOverrides?: Partial<JsonRpcCreateConfig>
-  ): Promise<Either<JsonRpcError, Result>>;
-  async exec<Result extends object>(
-    method: string,
-    params: JsonRpcParams,
-    id?: string,
-    configOverrides?: Partial<JsonRpcCreateConfig>
-  ): Promise<Either<JsonRpcError, Result>> {
+  ): Promise<
+    Either<
+      JsonRpcError,
+      Api extends EmptyObject
+        ? ApiResponse
+        : ReturnType<GetElementByIndex<Api, M>>
+    >
+  > {
     try {
       if (configOverrides) {
         this.config.merge(configOverrides);
@@ -135,7 +130,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
       }
 
       const data = new JsonRpcCall(
-        method,
+        method as string,
         params,
         id || this.config.idGeneratorFn?.()
       );
@@ -147,11 +142,12 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
         });
 
       const axiosData = axiosResponse.data;
-      assertJsonRpcReply<Result>(axiosData);
+      assertJsonRpcReply<ApiResponse>(axiosData);
 
       debug(axiosResponse);
 
-      const response = this.#jsonRpcResponseToEither(axiosData);
+      // typing this is _hard_ with conditional types, and not especially useful here.
+      const response = this.#jsonRpcResponseToEither(axiosData) as any;
       return response;
     } catch (err) {
       debug(err);

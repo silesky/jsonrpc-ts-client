@@ -48,7 +48,8 @@ it("handles contracts", async () => {
   // @ts-expect-error
   newClient.exec("getFoo"); // no params
 
-  newClient.exec("getFoo", { foo: 123 });
+  // @ts-expect-error
+  newClient.exec("getFoo", { dont_exist: 123 }); // wrong params
 });
 
 it("handles valid jsonrpc success responses", async () => {
@@ -69,8 +70,8 @@ it("handles valid jsonrpc success responses", async () => {
 it("handles valid jsonrpc error responses", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withError.response);
-  const foo = await client.exec<{ name: string }>("my_not_found_method", {
-    foo: 123,
+  const foo = await client.exec("my_not_found_method", {
+    bars: 123,
   });
   if (foo.isError()) {
     expect(foo).toEqual({
@@ -139,7 +140,7 @@ it("throws errors in response to a 200 response that does not match the jsonrpc 
   expect.assertions(1);
   mockResponse({ foo: "bad-jsonrpc-response" }, { status: 200 });
   try {
-    await client.exec("/foo/bar", { foo: 123 });
+    await client.exec<{ foo: number }>("/foo/bar", { foo: 123 });
   } catch (err: any) {
     expect(err.message).toContain("www.jsonrpc.org/specification");
   }
