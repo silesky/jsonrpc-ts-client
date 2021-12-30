@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { JsonRpcClient } from "../src";
 import { JSONRPC_URL, mockResponse, waitForRequest } from "./server";
 import * as uuid from "uuid";
@@ -28,7 +30,7 @@ it("handles contracts", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withSuccess.response);
 
-  const response = await newClient.execContract("getFoo", { fooId: 123 });
+  const response = await newClient.exec("getFoo", { fooId: 123 });
 
   if (response.isSuccess()) {
     expect(response).toEqual({
@@ -44,21 +46,21 @@ it("handles contracts", async () => {
 
   /** dtslint example */
   // @ts-expect-error
-  newClient.execContract("getFoo"); // no params
+  newClient.exec("getFoo"); // no params
 
   // @ts-expect-error
-  newClient.execContract("bar", { fooId: 123 }); // invalid method
-
-  // @ts-expect-error
-  newClient.execContract("getFoo", { does_not_exist: false });
+  newClient.exec("getFoo", { dont_exist: 123 }); // wrong params
 });
 
 it("handles valid jsonrpc success responses", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withSuccess.response);
-  const foo = await client.exec("my_method", { foo: 123 });
-  if (foo.isSuccess()) {
-    expect(foo).toEqual({
+  const response = await client.exec<{ foo: number }>("my_method", {
+    foo: 123,
+  });
+  if (response.isSuccess()) {
+    response.result.foo; // should not error
+    expect(response).toEqual({
       result: fixtures.withSuccess.payload,
       type: "success",
     });
@@ -68,8 +70,8 @@ it("handles valid jsonrpc success responses", async () => {
 it("handles valid jsonrpc error responses", async () => {
   expect.assertions(1);
   mockResponse(fixtures.withError.response);
-  const foo = await client.exec<{ name: string }>("my_not_found_method", {
-    foo: 123,
+  const foo = await client.exec("my_not_found_method", {
+    bars: 123,
   });
   if (foo.isError()) {
     expect(foo).toEqual({
@@ -138,7 +140,7 @@ it("throws errors in response to a 200 response that does not match the jsonrpc 
   expect.assertions(1);
   mockResponse({ foo: "bad-jsonrpc-response" }, { status: 200 });
   try {
-    await client.exec("/foo/bar", { foo: 123 });
+    await client.exec<{ foo: number }>("/foo/bar", { foo: 123 });
   } catch (err: any) {
     expect(err.message).toContain("www.jsonrpc.org/specification");
   }

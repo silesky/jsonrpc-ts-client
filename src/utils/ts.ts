@@ -11,3 +11,5 @@ export type GetElementByIndex<T, Index> = Index extends keyof T
 export type MapEither<T extends [...any[]]> = {
   [Index in keyof T]: Either<JsonRpcError, GetElementByIndex<T, Index>>;
 } & {};
+
+export type Compute<T> = { [P in keyof T]: T[P] } & {};
