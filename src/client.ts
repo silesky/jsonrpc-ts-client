@@ -102,6 +102,26 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
    * @param id - Request ID
    * @param configOverrides - Override the base client configurations
    */
+
+  async exec<
+    // This would be preferable to implement with vanilla method overloading.
+    // Todo: support "batch"
+    Method extends Api extends undefined ? string : keyof Api,
+    ReqResFn extends Method extends keyof Api // get value from interface
+      ? GetElementByIndex<Api, Method>
+      : never
+  >(
+    method: Method,
+    params: Parameters<ReqResFn>[0],
+    id?: string,
+    configOverrides?: Partial<JsonRpcCreateConfig>
+  ): Promise<Either<JsonRpcError, ReturnType<ReqResFn>>>;
+  async exec<Result>(
+    method: string,
+    params: JsonRpcParams,
+    id?: string,
+    configOverrides?: Partial<JsonRpcCreateConfig>
+  ): Promise<Either<JsonRpcError, Result>>;
   async exec<Result extends object>(
     method: string,
     params: JsonRpcParams,
@@ -137,26 +157,6 @@ export class JsonRpcClient<Api extends JsonRpcApi = {}> {
       debug(err);
       throw err;
     }
-  }
-
-  /**
-   * @experimental
-   *
-   * Execute a JSON-RPC Method call when using a contract declaration.
-   */
-  async execContract<
-    // This would be preferable to implement with vanilla method overloading.
-    // Todo: support "batch"
-    Method extends Api extends undefined ? string : keyof Api,
-    ReqResFn extends Method extends keyof Api // get value from interface
-      ? GetElementByIndex<Api, Method>
-      : never
-  >(
-    method: Method,
-    params: Method extends keyof Api ? Parameters<ReqResFn>[0] : JsonRpcParams,
-    id?: string
-  ): Promise<Either<JsonRpcError, ReturnType<ReqResFn>>> {
-    return this.exec<ReturnType<Api[Method]>>(method as string, params, id);
   }
 
   async execBatch<Result extends [...unknown[]]>(
