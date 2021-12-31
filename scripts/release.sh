@@ -9,7 +9,7 @@ fi
 git pull --ff-only
 
 # don't create git tag here, it will automatically be created in the next step
-npx bump prerelease --preid alpha --push
+npm version --no-git-tag-version patch -m "Upgrade to %s"
 
 # github will automatically create a tag when you create a release
 tag="v$(node -p "require('./package.json').version")"
@@ -19,3 +19,5 @@ gh release create \
   --draft \
   --title "$tag" \
   --notes "releases $tag"
+
+npm publish

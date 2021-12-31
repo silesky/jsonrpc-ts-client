@@ -1,8 +1,9 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.14",
   "license": "MIT",
   "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "module": "dist/jsonrpc-ts-client.esm.js",
+  "typings": "dist/types/src/index.d.ts",
   "files": [
     "dist",
     "src"
@@ -12,7 +13,7 @@
   },
   "scripts": {
     "start": "dts watch",
-    "build": "dts build",
+    "build": "dts build --tsconfig ./tsconfig.prod.json",
     "test": "dts test",
     "test:debug": "DEBUG=jsonrpc-ts-client npm test",
     "lint": "npm run tsc:check && eslint .",
@@ -25,8 +26,8 @@
     }
   },
   "name": "jsonrpc-ts-client",
+  "description": "A modern isomorphic typescript client for JSON-RPC 2.0",
   "author": "Seth Silesky",
-  "module": "dist/jsonrpc-ts-client.esm.js",
   "dependencies": {
     "axios": "^0.24.0",
     "debug": "^4.3.3"

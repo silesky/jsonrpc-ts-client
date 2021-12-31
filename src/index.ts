@@ -5,6 +5,8 @@ export {
   JsonRpcClientCallOptions,
 } from "./client";
 
+export { JsonRpcClient as default } from "./client";
+
 export {
   InvalidJsonRpcResponseError,
   JsonRpcCall,
