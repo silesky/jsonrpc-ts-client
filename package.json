@@ -1,5 +1,5 @@
 {
-  "version": "0.1.17",
+  "version": "0.1.18",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/jsonrpc-ts-client.esm.js",
@@ -13,11 +13,11 @@
   },
   "scripts": {
     "start": "dts watch",
-    "build": "dts build",
+    "build": "dts build --tsconfig ./tsconfig.prod.json",
     "test": "dts test",
     "test:debug": "DEBUG=jsonrpc-ts-client npm test",
     "lint": "npm run tsc:check && eslint .",
-    "prepare": "dts build",
+    "prepare": "npm run build",
     "tsc:check": "tsc --noEmit"
   },
   "husky": {
