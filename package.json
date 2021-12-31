@@ -1,5 +1,5 @@
 {
-  "version": "0.1.15",
+  "version": "0.1.17",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/jsonrpc-ts-client.esm.js",
