@@ -1,9 +1,9 @@
 {
-  "version": "0.1.14",
+  "version": "0.1.15",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/jsonrpc-ts-client.esm.js",
-  "typings": "dist/types/src/index.d.ts",
+  "typings": "dist/types/index.d.ts",
   "files": [
     "dist",
     "src"
