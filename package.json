@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "dts watch",
-    "build": "dts build --tsconfig ./tsconfig.prod.json",
+    "build": "dts build",
     "test": "dts test",
     "test:debug": "DEBUG=jsonrpc-ts-client npm test",
     "lint": "npm run tsc:check && eslint .",
