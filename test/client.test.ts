@@ -13,43 +13,73 @@ beforeEach(() => {
   });
 });
 
-it("handles contracts", async () => {
-  type GetFooRequestDto = {
-    fooId: number;
-  };
-  type GetFooResponseDto = {
-    name: "foo";
-  };
-  type MyApiContract = {
-    getFoo: (params: GetFooRequestDto) => GetFooResponseDto;
-  };
-  const newClient = new JsonRpcClient<MyApiContract>({
-    idGeneratorFn: uuid.v4,
-    url: JSONRPC_URL,
-  });
-  expect.assertions(1);
-  mockResponse(fixtures.withSuccess.response);
-
-  const response = await newClient.exec("getFoo", { fooId: 123 });
-
-  if (response.isSuccess()) {
-    expect(response).toEqual({
-      result: fixtures.withSuccess.payload,
-      type: "success",
+describe("contracts", () => {
+  it("handles contracts", async () => {
+    type GetFooRequestDto = {
+      fooId: number;
+    };
+    type GetFooResponseDto = {
+      name: string;
+    };
+    type MyApiContract = {
+      getFoo: (params: GetFooRequestDto) => GetFooResponseDto;
+      getBar: (params: { age: number }) => { bar: string };
+    };
+    const newClient = new JsonRpcClient<MyApiContract>({
+      idGeneratorFn: uuid.v4,
+      url: JSONRPC_URL,
     });
+    expect.assertions(1);
+    mockResponse(fixtures.withSuccess.response);
 
-    // TODO: use dtslint
+    const response = await newClient.exec("getFoo", { fooId: 123 });
 
-    // expect no error = name should be string
-    response.result.name;
-  }
+    if (response.isSuccess()) {
+      expect(response.result.name).toBe(fixtures.withSuccess.payload.name);
+    }
 
-  /** dtslint example */
-  // @ts-expect-error
-  newClient.exec("getFoo"); // no params
+    /** dtslint example */
+    /** dtslint example */
+    // @ts-expect-error
+    newClient.exec("getFoo"); // no params
 
-  // @ts-expect-error
-  newClient.exec("getFoo", { dont_exist: 123 }); // wrong params
+    // @ts-expect-error
+    newClient.exec("getBar", { fooId: 123 }); // wrong params
+
+    // @ts-expect-error
+    newClient.exec("getFoo", { dont_exist: 123 }); // wrong params
+  });
+
+  it("handles batch", async () => {
+    type MyApiContract = {
+      getFoo: (params: {
+        fooId: number;
+      }) => typeof fixtures.batchWithSuccess.payload1;
+      getBar: () => typeof fixtures.batchWithSuccess.payload2;
+      getFooBar: () => typeof fixtures.batchWithSuccess.payload1;
+    };
+    const newClient = new JsonRpcClient<MyApiContract>({
+      idGeneratorFn: uuid.v4,
+      url: JSONRPC_URL,
+    });
+    expect.assertions(2);
+    mockResponse(fixtures.batchWithSuccess.response);
+
+    const [r1, r2] = await newClient.execBatch([
+      { method: "getFoo", params: { fooId: 123 } },
+      { method: "getBar" },
+    ] as const);
+
+    if (r1.isSuccess()) {
+      expect(r1.result.name).toBe(fixtures.batchWithSuccess.payload1.name);
+    }
+
+    if (r2.isSuccess()) {
+      expect(r2.result.some_data).toEqual(
+        fixtures.batchWithSuccess.payload2.some_data
+      );
+    }
+  });
 });
 
 it("handles valid jsonrpc success responses", async () => {
@@ -119,10 +149,12 @@ it("handles batch jsonrpc success responses", async () => {
   ]);
   const [r1, r2] = responses;
   if (r1.isSuccess()) {
-    expect(r1.result).toEqual(fixtures.batchWithSuccess.payload1);
+    expect(r1.result.name).toBe(fixtures.batchWithSuccess.payload1.name);
   }
   if (r2.isSuccess()) {
-    expect(r2.result).toEqual(fixtures.batchWithSuccess.payload2);
+    expect(r2.result.some_data).toBe(
+      fixtures.batchWithSuccess.payload2.some_data
+    );
   }
 });
 
