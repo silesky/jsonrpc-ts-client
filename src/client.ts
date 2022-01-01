@@ -69,6 +69,36 @@ type EmptyObject = Record<string, never>;
 
 type KeyofOrDefault<T> = T extends EmptyObject ? string : keyof T;
 
+type GetParamsFromContract<
+  Api extends JsonRpcApi,
+  Method extends keyof Api
+> = Parameters<Api[Method]>[0];
+
+type GetResponseFromContract<
+  Api extends JsonRpcApi,
+  Method extends keyof Api
+> = ReturnType<Api[Method]>;
+
+type Call<Api extends JsonRpcApi, Method extends keyof Api> = {
+  method: Method;
+  params?: Api extends EmptyObject
+    ? JsonRpcParams
+    : GetParamsFromContract<Api, Method>;
+  id?: string;
+};
+
+type GetAllResponses<
+  Api extends JsonRpcApi,
+  Calls extends readonly Call<any, any>[]
+> = {
+  [Index in keyof Calls]: Either<
+    JsonRpcError,
+    ReturnType<
+      GetElementByIndex<Api, GetElementByIndex<Calls[Index], "method">>
+    >
+  >;
+};
+
 /**
  * Instantiate this class to make requests to a JSON-RPC endpoint (or endpoints).
  */
@@ -101,28 +131,36 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
       : new SuccessResponse(axiosData.result);
   }
 
+  async exec<M extends keyof Api = any>(
+    method: M,
+    params: GetParamsFromContract<Api, M>,
+    id?: string,
+    configOverrides?: Partial<JsonRpcCreateConfig>
+  ): Promise<Either<JsonRpcError, GetResponseFromContract<Api, M>>>;
+
+  async exec<Response>(
+    method: Api extends EmptyObject ? string : never, // maybe add a branded type??
+    params?: JsonRpcParams,
+    id?: string,
+    configOverrides?: Partial<JsonRpcCreateConfig>
+  ): Promise<Either<JsonRpcError, Response>>;
+
   /**
-   * Execute a JSON-RPC Method call.
+  /**
+   * Execute a single JSON-RPC request.
+   * @link https://www.jsonrpc.org/specification#request_object
+   *
    * @param method - JSON-RPC Method (e.g 'getUser')
    * @param params - Data that will be sent in the request body to the JSON-RPC endpoint
    * @param id - Request ID
    * @param configOverrides - Override the base client configurations
    */
-  async exec<ApiResponse, M extends KeyofOrDefault<Api> = any>(
-    method: M,
-    params: Api extends EmptyObject
-      ? JsonRpcParams
-      : Parameters<GetElementByIndex<Api, M>>[0],
+  async exec(
+    method: string,
+    params: JsonRpcParams,
     id?: string,
     configOverrides?: Partial<JsonRpcCreateConfig>
-  ): Promise<
-    Either<
-      JsonRpcError,
-      Api extends EmptyObject
-        ? ApiResponse
-        : ReturnType<GetElementByIndex<Api, M>>
-    >
-  > {
+  ) {
     try {
       if (configOverrides) {
         this.config.merge(configOverrides);
@@ -142,12 +180,11 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
         });
 
       const axiosData = axiosResponse.data;
-      assertJsonRpcReply<ApiResponse>(axiosData);
+      assertJsonRpcReply<any>(axiosData);
 
       debug(axiosResponse);
 
-      // typing this is _hard_ with conditional types, and not especially useful here.
-      const response = this.#jsonRpcResponseToEither(axiosData) as any;
+      const response = this.#jsonRpcResponseToEither(axiosData);
       return response;
     } catch (err) {
       debug(err);
@@ -155,15 +192,29 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
     }
   }
 
-  async execBatch<Result extends [...unknown[]]>(
-    calls: JsonRpcClientCallOptions[]
-  ) {
+  /**
+   * Execute a batch JSON-RPC request.
+   * @link https://www.jsonrpc.org/specification#batch
+   *
+   * @param calls - an array of calls
+   * @example execBatch([{ method: 'getFoo', params: {fooId: 123}}, { method: 'getBar'}])
+   */
+  async execBatch<
+    M extends KeyofOrDefault<Api>,
+    Calls extends readonly Call<Api, M>[]
+  >(calls: Calls): Promise<GetAllResponses<Api, Calls>>;
+
+  async execBatch<Result extends unknown[]>(
+    calls: Call<JsonRpcApi, string>[]
+  ): Promise<MapEither<Result>>;
+
+  async execBatch(calls: Call<any, any>[]): Promise<unknown[]> {
     try {
       const data = calls.map(
         (el) =>
           new JsonRpcCall(
             el.method,
-            el.params,
+            el.params as JsonRpcParams,
             el.id || this.config.idGeneratorFn?.()
           )
       );
@@ -179,9 +230,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
 
       debug(axiosResponse);
 
-      const response = axiosData.map(
-        this.#jsonRpcResponseToEither
-      ) as MapEither<Result>;
+      const response = axiosData.map(this.#jsonRpcResponseToEither);
       return response;
     } catch (err) {
       debug(err);

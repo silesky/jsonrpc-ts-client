@@ -90,7 +90,7 @@ export class JsonRpcCall<Params extends JsonRpcParams> {
   public jsonrpc = "2.0";
   constructor(
     public method: string,
-    public params: Params,
+    public params?: Params,
     public id?: string
   ) {}
 }
