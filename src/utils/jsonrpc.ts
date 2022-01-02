@@ -1,3 +1,4 @@
+import { Either, ErrorResponse, SuccessResponse } from "./either";
 import { hasProperties, isObject } from "./exists";
 
 export interface JsonRpcError {
@@ -94,3 +95,11 @@ export class JsonRpcCall<Params extends JsonRpcParams> {
     public id?: string
   ) {}
 }
+
+export const jsonRpcResponseToEither = <T>(
+  response: JsonRpcResponse<T>
+): Either<JsonRpcError, T> => {
+  return isJsonRpcResponseError(response)
+    ? new ErrorResponse(response.error)
+    : new SuccessResponse(response.result);
+};

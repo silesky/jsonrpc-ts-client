@@ -3,13 +3,12 @@ import Debug from "debug";
 import {
   assertJsonRpcReply,
   assertJsonRpcReplyBatch,
-  isJsonRpcResponseError,
   JsonRpcCall,
   JsonRpcError,
   JsonRpcParams,
-  JsonRpcResponse,
+  jsonRpcResponseToEither,
 } from "./utils/jsonrpc";
-import { Either, ErrorResponse, SuccessResponse } from "./utils/either";
+import { Either } from "./utils/either";
 import { GetElementByIndex, MapEither } from "./utils/ts";
 
 /* run via npm test DEBUG=jsonrpc-ts-client etc */
@@ -67,8 +66,6 @@ type JsonRpcApi = {
 
 type EmptyObject = Record<string, never>;
 
-type KeyofOrDefault<T> = T extends EmptyObject ? string : keyof T;
-
 type GetParamsFromContract<
   Api extends JsonRpcApi,
   Method extends keyof Api
@@ -79,11 +76,13 @@ type GetResponseFromContract<
   Method extends keyof Api
 > = ReturnType<Api[Method]>;
 
+type GetAllCalls<Api extends JsonRpcApi> = {
+  [Method in keyof Api]: Call<Api, Method>;
+}[keyof Api];
+
 type Call<Api extends JsonRpcApi, Method extends keyof Api> = {
   method: Method;
-  params?: Api extends EmptyObject
-    ? JsonRpcParams
-    : GetParamsFromContract<Api, Method>;
+  params?: GetParamsFromContract<Api, Method>;
   id?: string;
 };
 
@@ -102,7 +101,6 @@ type GetAllResponses<
 /**
  * Instantiate this class to make requests to a JSON-RPC endpoint (or endpoints).
  */
-
 export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
   #client: AxiosInstance;
   config: ApiClientConfig;
@@ -121,14 +119,6 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
       headers: config.headers,
       validateStatus: () => true, // never throw errors in response to status codes
     });
-  }
-
-  #jsonRpcResponseToEither<T>(
-    axiosData: JsonRpcResponse<T>
-  ): Either<JsonRpcError, T> {
-    return isJsonRpcResponseError(axiosData)
-      ? new ErrorResponse(axiosData.error)
-      : new SuccessResponse(axiosData.result);
   }
 
   async exec<M extends keyof Api = any>(
@@ -184,7 +174,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
 
       debug(axiosResponse);
 
-      const response = this.#jsonRpcResponseToEither(axiosData);
+      const response = jsonRpcResponseToEither(axiosData);
       return response;
     } catch (err) {
       debug(err);
@@ -199,10 +189,9 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
    * @param calls - an array of calls
    * @example execBatch([{ method: 'getFoo', params: {fooId: 123}}, { method: 'getBar'}])
    */
-  async execBatch<
-    M extends KeyofOrDefault<Api>,
-    Calls extends readonly Call<Api, M>[]
-  >(calls: Calls): Promise<GetAllResponses<Api, Calls>>;
+  async execBatch<Calls extends readonly GetAllCalls<Api>[]>(
+    calls: Calls
+  ): Promise<GetAllResponses<Api, Calls>>;
 
   async execBatch<Result extends unknown[]>(
     calls: Call<JsonRpcApi, string>[]
@@ -230,7 +219,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
 
       debug(axiosResponse);
 
-      const response = axiosData.map(this.#jsonRpcResponseToEither);
+      const response = axiosData.map(jsonRpcResponseToEither);
       return response;
     } catch (err) {
       debug(err);

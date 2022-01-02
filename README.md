@@ -52,40 +52,9 @@ console.log(result.name)
 
 ```
 
-##  ID Generation
-Generate IDs automatically, and/or override or set them on a per-request basis.
 
-```ts
-
-import JSONRPC from 'jsonrpc-ts-client'
-import uuid from 'uuid'
-
-const client = new JSONRPC({
-  ...
-  idGeneratorFn: uuid.v4,
-})
-
-// Override generate IDs
-const response = await client.exec<UserDto>('my_method', { userId: 123 }, 'MY_OVERRIDING_ID'); // sends payload {jsonrpc: '2.0', id: 'MY_OVERRIDING_ID',  params: ...}
-```
-
-## Batch Support
+## API Contract Declaration Support (Recommended option)
 You can make [batch requests](https://www.jsonrpc.org/specification#batch) per the JSON-RPC specification.
-```ts
-
-import JSONRPC from 'jsonrpc-ts-client'
-
-const client = new JSONRPC({
-  url: 'https://foo.com/jsonrpc'
-})
-
- const responses = await client.execBatch<[UserDto, ConfigDto]>([
-    { method: "get_user",  params: { userId: 123 }, id: "foo" },
-    { method: "get_config" },
-  ]);
-```
-
-## API Contract Declaration Support (experimental)
 ```ts
 
 import JSONRPC from 'jsonrpc-ts-client'
@@ -110,4 +79,45 @@ if (result.isSuccess()) {
   console.log(result.user.id)
 }
 
+
+
+/** batch support **/
+const [user, config] = await client.execBatch([
+      { method: "getUser", params: { userId: 123 } },
+      { method: "getConfig" },
+    ] as const
+);
+
+if (user.isSuccess()) {
+  console.log(user.name)
+  console.log(user.id)
+}
+
+if (config.isSuccesss()) {
+  console.log(config.foo)
+}
+
 ```
+
+##  ID Generation
+Generate IDs automatically, and/or override or set them on a per-request basis.
+
+```ts
+
+import JSONRPC from 'jsonrpc-ts-client'
+import uuid from 'uuid'
+
+// automatically generate IDs on each request
+const client = new JSONRPC({
+  ...
+  idGeneratorFn: uuid.v4,
+})
+
+
+
+// override your generated IDs at any time...
+const response = await client.exec( 'my_method', { userId: 123 }, 'MY_OVERRIDING_ID');
+// => {jsonrpc: '2.0', id: 'MY_OVERRIDING_ID',  params: { userId: 123 } }
+```
+
+
