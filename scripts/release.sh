@@ -15,8 +15,6 @@ npm version --no-git-tag-version patch -m "Upgrade to %s"
 tag="v$(node -p "require('./package.json').version")"
 gh release create \
   "$tag" \
-  --prerelease \
-  --draft \
   --title "$tag" \
   --notes "releases $tag"
 
