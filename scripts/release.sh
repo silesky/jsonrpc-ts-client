@@ -7,6 +7,8 @@ if [[ "$BRANCH" != "main" ]]; then
   exit 0
 fi
 
+npm run build &&
+
 # make sure you don't tag an old commit
 git pull --ff-only &&
 
