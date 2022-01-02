@@ -39,7 +39,6 @@ describe("contracts", () => {
     }
 
     /** dtslint example */
-    /** dtslint example */
     // @ts-expect-error
     newClient.exec("getFoo"); // no params
 
@@ -56,7 +55,9 @@ describe("contracts", () => {
         fooId: number;
       }) => typeof fixtures.batchWithSuccess.payload1;
       getBar: () => typeof fixtures.batchWithSuccess.payload2;
-      getFooBar: () => typeof fixtures.batchWithSuccess.payload1;
+      getFooBar: (params: {
+        name: string;
+      }) => typeof fixtures.batchWithSuccess.payload1;
     };
     const newClient = new JsonRpcClient<MyApiContract>({
       idGeneratorFn: uuid.v4,
@@ -79,6 +80,29 @@ describe("contracts", () => {
         fixtures.batchWithSuccess.payload2.some_data
       );
     }
+
+    /** dtslint example */
+
+    // @ts-expect-error
+    newClient.execBatch([
+      { method: "getBar", params: { name: "foo" } },
+    ] as const);
+
+    // @ts-expect-error
+    newClient.execBatch([
+      { method: "getBar", params: { name: "foo" } },
+      { method: "getFoo", params: { name: "foo" } }, // should use the write param
+    ] as const);
+
+    // @ts-expect-error
+    newClient.execBatch([
+      { method: "getFoo", params: { name: "foo" } }, // should be undefined
+    ] as const);
+
+    // no error
+    newClient.execBatch([
+      { method: "getFoo" }, // should be undefined
+    ]);
   });
 });
 
