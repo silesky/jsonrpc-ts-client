@@ -128,6 +128,13 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
     configOverrides?: Partial<JsonRpcCreateConfig>
   ): Promise<Either<JsonRpcError, GetResponseFromContract<Api, M>>>;
 
+  async exec<M extends keyof Api = any>(
+    method: GetParamsFromContract<Api, M> extends undefined ? M : never,
+    params?: undefined,
+    id?: string,
+    configOverrides?: Partial<JsonRpcCreateConfig>
+  ): Promise<Either<JsonRpcError, GetResponseFromContract<Api, M>>>;
+
   async exec<Response>(
     method: Api extends EmptyObject ? string : never, // maybe add a branded type??
     params?: JsonRpcParams,
@@ -147,7 +154,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
    */
   async exec(
     method: string,
-    params: JsonRpcParams,
+    params?: JsonRpcParams,
     id?: string,
     configOverrides?: Partial<JsonRpcCreateConfig>
   ) {

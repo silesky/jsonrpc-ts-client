@@ -22,6 +22,7 @@ describe("contracts", () => {
       name: string;
     };
     type MyApiContract = {
+      GetThingWithNoParams: () => GetFooResponseDto;
       getFoo: (params: GetFooRequestDto) => GetFooResponseDto;
       getBar: (params: { age: number }) => { bar: string };
     };
@@ -38,9 +39,12 @@ describe("contracts", () => {
       expect(response.result.name).toBe(fixtures.withSuccess.payload.name);
     }
 
+    // should be no error
+    newClient.exec("GetThingWithNoParams"); // should not have params
+
     /** dtslint example */
     // @ts-expect-error
-    newClient.exec("getFoo"); // no params
+    newClient.exec("getFoo"); // no params -- should have params
 
     // @ts-expect-error
     newClient.exec("getBar", { fooId: 123 }); // wrong params
