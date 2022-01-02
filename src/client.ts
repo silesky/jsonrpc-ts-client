@@ -104,19 +104,10 @@ export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
 
   constructor(
     // Intentionally re-defining some options-inline for better intellisense.
-    config:
-      | {
-          url: string;
-          headers?: Record<string, string>;
-          idGeneratorFn?: () => string;
-        }
-      | JsonRpcConfig
+    config: JsonRpcConfigOptions
   ) {
-    this.config =
-      config instanceof JsonRpcConfig ? config : new JsonRpcConfig(config);
-
+    this.config = new JsonRpcConfig(config);
     this.config.validate();
-
     this.#client = this.#buildAxiosClient(this.config);
   }
 

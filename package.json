@@ -12,7 +12,7 @@
     "node": ">=12"
   },
   "scripts": {
-    "start": "dts watch",
+    "start": "dts watch --tsconfig ./tsconfig.prod.json",
     "build": "dts build --tsconfig ./tsconfig.prod.json",
     "test": "dts test",
     "t:watch": "dts test --watch",

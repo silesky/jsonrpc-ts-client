@@ -32,7 +32,7 @@ describe("contracts", () => {
 
   /* skip intentionally - dtslint is a better tool. */
   test.skip("[Typings]: batch", () => {
-    // should work with interface if extended
+    // should work with interface if
     interface IContract extends JsonRpcApiContract {
       hello: () => { name: string };
     }
