@@ -19,7 +19,8 @@
     "t:debug": "DEBUG=jsonrpc-ts-client npm test",
     "lint": "npm run tsc:check && eslint .",
     "prepare": "npm run build",
-    "tsc:check": "tsc --noEmit"
+    "tsc:check": "tsc --noEmit",
+    "release": "bash scripts/release.sh"
   },
   "husky": {
     "hooks": {
