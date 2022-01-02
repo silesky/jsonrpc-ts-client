@@ -1,18 +1,17 @@
-
-### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification). The goal of this project is to provide maximum ergonomics for typescript projects (autocomplete all the things!). This app could be used standalone, or as a dependency for an OpenRPC TS SDK generator.
-
-#### This project uses Typescript 4.x features; as such, earlier versions of typescript are not officially supported.
-
 ![Build Status](https://img.shields.io/github/workflow/status/silesky/jsonrpc-ts-client/CI/main?label=build)
+### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification). The goal of this project is to provide maximum ergonomics for typescript projects (autocomplete all the things!). This app could be used standalone, or as a dependency for an SDK generator.
 
 Check out the [Open RPC Ecosystem](https://open-rpc.org/) for more tools.
 
-## Feature Table
+![Basic Example](docs/img/basic-example.gif)
+
+## Features
 | Feature                      | Supported
 | ---------------------------- | -------- |
 | Isomorphism                  |  ✅      |
 | Batch Support                |  ✅      |
 | Contract Support             |  ✅      |
+
 
 ### Installation
 ```
@@ -80,9 +79,19 @@ if (result.isSuccess()) {
   console.log(result.user.id)
 }
 
+```
+# Batch Support
+![Basic Example](docs/img/batch-example.gif)
+```ts
+import JSONRPC from 'jsonrpc-ts-client'
 
 
-/** batch support **/
+type MyApiContract = {
+  getUser: (params: UserParamsDto) => UserDto;
+  getConfig: () => ConfigDto,
+  getProduct: (productId: string) => ProductDto,
+};
+
 const [user, config] = await client.execBatch([
       { method: "getUser", params: { userId: 123 } },
       { method: "getConfig" },
@@ -120,5 +129,3 @@ const client = new JSONRPC({
 const response = await client.exec( 'my_method', { userId: 123 }, 'MY_OVERRIDING_ID');
 // => {jsonrpc: '2.0', id: 'MY_OVERRIDING_ID',  params: { userId: 123 } }
 ```
-
-
