@@ -1,6 +1,8 @@
 ![Build Status](https://img.shields.io/github/workflow/status/silesky/jsonrpc-ts-client/CI/main?label=build)
 ### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification). The goal of this project is to provide maximum ergonomics for typescript projects (autocomplete all the things!). This app could be used standalone, or as a dependency for an SDK generator.
 
+> Warning: this project is in alpha, and the API is subject to change.
+
 Check out the [Open RPC Ecosystem](https://open-rpc.org/) for more tools.
 
 ![Basic Example](docs/img/basic-example.gif)
