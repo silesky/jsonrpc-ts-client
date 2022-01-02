@@ -1,6 +1,7 @@
-### Warning: this project uses Typescript 4.x features; as such, earlier versions of typescript are not officially supported.
 
 ### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification). The goal of this project is to provide maximum ergonomics for typescript projects (autocomplete all the things!). This app could be used standalone, or as a dependency for an OpenRPC TS SDK generator.
+
+#### This project uses Typescript 4.x features; as such, earlier versions of typescript are not officially supported.
 
 ![Build Status](https://img.shields.io/github/workflow/status/silesky/jsonrpc-ts-client/CI/main?label=build)
 
