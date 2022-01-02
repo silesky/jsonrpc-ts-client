@@ -12,7 +12,7 @@ Check out the [Open RPC Ecosystem](https://open-rpc.org/) for more tools.
 | ---------------------------- | -------- |
 | Isomorphism                  |  ✅      |
 | Batch Support                |  ✅      |
-| Contract Support            |   Experimental |
+| Contract Support             |  ✅      |
 
 ### Installation
 ```
