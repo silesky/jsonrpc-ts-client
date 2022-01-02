@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
-import Debug from "debug";
 import {
   assertJsonRpcReply,
   assertJsonRpcReplyBatch,
@@ -10,22 +9,26 @@ import {
 } from "./utils/jsonrpc";
 import { Either } from "./utils/either";
 import { GetElementByIndex, MapEither } from "./utils/ts";
+import { debug } from "./utils/debug";
 
-/* run via npm test DEBUG=jsonrpc-ts-client etc */
-const debug = Debug("jsonrpc-ts-client");
-
-export interface JsonRpcCreateConfig {
+export interface JsonRpcConfigOptions {
   url: string;
   headers?: Record<string, string>;
   idGeneratorFn?: () => string;
 }
 
-export class ApiClientConfig {
-  url: string;
-  headers?: Record<string, string>;
+// intentionally separate the final configuration from the arguments used for its instantiation, since these could easily deviate.
+export class JsonRpcConfig implements JsonRpcConfigOptions {
+  url: JsonRpcConfigOptions["url"];
+  headers?: JsonRpcConfigOptions["headers"];
+  idGeneratorFn?: JsonRpcConfigOptions["idGeneratorFn"];
 
-  idGeneratorFn?: () => string;
-
+  constructor(opts: JsonRpcConfigOptions) {
+    this.url = opts.url;
+    this.headers = opts.headers;
+    this.idGeneratorFn = opts.idGeneratorFn;
+    this.validate();
+  }
   /**
    * Asserts that the current object is valid; this is useful in non-typescript environments.
    */
@@ -40,17 +43,11 @@ export class ApiClientConfig {
    * Allows the user to do ad-hock updates to the configration.
    * Merge a set of arbitrary overrides with the current configuration, and validate.
    */
-  public merge(o: Partial<JsonRpcCreateConfig>) {
+  public merge(o: Partial<JsonRpcConfigOptions>) {
     o.url && (this.url = o.url);
     o.idGeneratorFn && (this.idGeneratorFn = o.idGeneratorFn);
     o.headers && (o.headers = this.headers);
     this.validate();
-  }
-
-  constructor(opts: JsonRpcCreateConfig) {
-    this.url = opts.url;
-    this.headers = opts.headers;
-    this.idGeneratorFn = opts.idGeneratorFn;
   }
 }
 
@@ -60,34 +57,34 @@ export interface JsonRpcClientCallOptions {
   id?: string;
 }
 
-type JsonRpcApi = {
+export interface JsonRpcApiContract {
   [methodName: string]: (params: any) => any;
-};
+}
 
 type EmptyObject = Record<string, never>;
 
 type GetParamsFromContract<
-  Api extends JsonRpcApi,
+  Api extends JsonRpcApiContract,
   Method extends keyof Api
 > = Parameters<Api[Method]>[0];
 
 type GetResponseFromContract<
-  Api extends JsonRpcApi,
+  Api extends JsonRpcApiContract,
   Method extends keyof Api
 > = ReturnType<Api[Method]>;
 
-type GetAllCalls<Api extends JsonRpcApi> = {
+type GetAllCalls<Api extends JsonRpcApiContract> = {
   [Method in keyof Api]: Call<Api, Method>;
 }[keyof Api];
 
-type Call<Api extends JsonRpcApi, Method extends keyof Api> = {
+type Call<Api extends JsonRpcApiContract, Method extends keyof Api> = {
   method: Method;
   params?: GetParamsFromContract<Api, Method>;
   id?: string;
 };
 
 type GetAllResponses<
-  Api extends JsonRpcApi,
+  Api extends JsonRpcApiContract,
   Calls extends readonly Call<any, any>[]
 > = {
   [Index in keyof Calls]: Either<
@@ -101,19 +98,32 @@ type GetAllResponses<
 /**
  * Instantiate this class to make requests to a JSON-RPC endpoint (or endpoints).
  */
-export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
+export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
   #client: AxiosInstance;
-  config: ApiClientConfig;
+  config: JsonRpcConfig;
 
-  constructor(opts: JsonRpcCreateConfig) {
-    this.config = new ApiClientConfig(opts);
+  constructor(
+    // Intentionally re-defining some options-inline for better intellisense.
+    config:
+      | {
+          url: string;
+          headers?: Record<string, string>;
+          idGeneratorFn?: () => string;
+        }
+      | JsonRpcConfig
+  ) {
+    this.config =
+      config instanceof JsonRpcConfig ? config : new JsonRpcConfig(config);
+
+    this.config.validate();
+
     this.#client = this.#buildAxiosClient(this.config);
   }
 
   /**
    * Create a new axios client.
    */
-  #buildAxiosClient(config: ApiClientConfig) {
+  #buildAxiosClient(config: JsonRpcConfig) {
     return axios.create({
       baseURL: config.url,
       headers: config.headers,
@@ -125,21 +135,21 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
     method: M,
     params: GetParamsFromContract<Api, M>,
     id?: string,
-    configOverrides?: Partial<JsonRpcCreateConfig>
+    configOverrides?: Partial<JsonRpcConfigOptions>
   ): Promise<Either<JsonRpcError, GetResponseFromContract<Api, M>>>;
 
   async exec<M extends keyof Api = any>(
     method: GetParamsFromContract<Api, M> extends undefined ? M : never,
     params?: undefined,
     id?: string,
-    configOverrides?: Partial<JsonRpcCreateConfig>
+    configOverrides?: Partial<JsonRpcConfigOptions>
   ): Promise<Either<JsonRpcError, GetResponseFromContract<Api, M>>>;
 
   async exec<Response>(
     method: Api extends EmptyObject ? string : never, // maybe add a branded type??
     params?: JsonRpcParams,
     id?: string,
-    configOverrides?: Partial<JsonRpcCreateConfig>
+    configOverrides?: Partial<JsonRpcConfigOptions>
   ): Promise<Either<JsonRpcError, Response>>;
 
   /**
@@ -156,7 +166,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
     method: string,
     params?: JsonRpcParams,
     id?: string,
-    configOverrides?: Partial<JsonRpcCreateConfig>
+    configOverrides?: Partial<JsonRpcConfigOptions>
   ) {
     try {
       if (configOverrides) {
@@ -201,7 +211,7 @@ export class JsonRpcClient<Api extends JsonRpcApi = EmptyObject> {
   ): Promise<GetAllResponses<Api, Calls>>;
 
   async execBatch<Result extends unknown[]>(
-    calls: Call<JsonRpcApi, string>[]
+    calls: Call<JsonRpcApiContract, string>[]
   ): Promise<MapEither<Result>>;
 
   async execBatch(calls: Call<any, any>[]): Promise<unknown[]> {

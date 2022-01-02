@@ -4,6 +4,7 @@ import { JsonRpcClient } from "../src";
 import { JSONRPC_URL, mockResponse, waitForRequest } from "./server";
 import * as uuid from "uuid";
 import * as fixtures from "./fixtures";
+import { JsonRpcApiContract } from "../src/client";
 
 let client!: JsonRpcClient;
 beforeEach(() => {
@@ -14,63 +15,89 @@ beforeEach(() => {
 });
 
 describe("contracts", () => {
-  it("handles contracts", async () => {
-    type GetFooRequestDto = {
+  type MyApiContract = {
+    getFoo: (params: {
       fooId: number;
-    };
-    type GetFooResponseDto = {
+    }) => typeof fixtures.batchWithSuccess.payload1;
+    getBar: () => typeof fixtures.batchWithSuccess.payload2;
+    getFooBar: (params: {
       name: string;
-    };
-    type MyApiContract = {
-      GetThingWithNoParams: () => GetFooResponseDto;
-      getFoo: (params: GetFooRequestDto) => GetFooResponseDto;
-      getBar: (params: { age: number }) => { bar: string };
-    };
-    const newClient = new JsonRpcClient<MyApiContract>({
+    }) => typeof fixtures.batchWithSuccess.payload1;
+  };
+
+  const clientContract = new JsonRpcClient<MyApiContract>({
+    idGeneratorFn: uuid.v4,
+    url: JSONRPC_URL,
+  });
+
+  /* skip intentionally - dtslint is a better tool. */
+  test.skip("[Typings]: batch", () => {
+    // should work with interface if extended
+    interface IContract extends JsonRpcApiContract {
+      hello: () => { name: string };
+    }
+
+    new JsonRpcClient<IContract>({
       idGeneratorFn: uuid.v4,
       url: JSONRPC_URL,
     });
+
+    // should be no error
+    clientContract.exec("getBar"); // should not have params
+
+    /** dtslint example */
+    // @ts-expect-error
+    clientContract.exec("getFoo"); // no params -- should have params
+
+    // @ts-expect-error
+    clientContract.exec("blah"); // does not exist
+
+    // @ts-expect-error
+    clientContract.exec("getBar", { fooId: 123 }); // wrong params
+
+    // @ts-expect-error
+    clientContract.exec("getFoo", { dont_exist: 123 }); // wrong params
+
+    /** dtslint example */
+
+    // @ts-expect-error
+    clientContract.execBatch([
+      { method: "getBar", params: { name: "foo" } },
+    ] as const);
+
+    // @ts-expect-error
+    clientContract.execBatch([
+      { method: "getBar", params: { name: "foo" } },
+      { method: "getFoo", params: { name: "foo" } }, // should use the write param
+    ] as const);
+
+    // @ts-expect-error
+    clientContract.execBatch([
+      { method: "getFoo", params: { name: "foo" } }, // should be undefined
+    ] as const);
+
+    // no error
+    clientContract.execBatch([
+      { method: "getFoo" }, // should be undefined
+    ]);
+  });
+
+  it("handles contracts", async () => {
     expect.assertions(1);
     mockResponse(fixtures.withSuccess.response);
 
-    const response = await newClient.exec("getFoo", { fooId: 123 });
+    const response = await clientContract.exec("getFoo", { fooId: 123 });
 
     if (response.isSuccess()) {
       expect(response.result.name).toBe(fixtures.withSuccess.payload.name);
     }
-
-    // should be no error
-    newClient.exec("GetThingWithNoParams"); // should not have params
-
-    /** dtslint example */
-    // @ts-expect-error
-    newClient.exec("getFoo"); // no params -- should have params
-
-    // @ts-expect-error
-    newClient.exec("getBar", { fooId: 123 }); // wrong params
-
-    // @ts-expect-error
-    newClient.exec("getFoo", { dont_exist: 123 }); // wrong params
   });
 
   it("handles batch", async () => {
-    type MyApiContract = {
-      getFoo: (params: {
-        fooId: number;
-      }) => typeof fixtures.batchWithSuccess.payload1;
-      getBar: () => typeof fixtures.batchWithSuccess.payload2;
-      getFooBar: (params: {
-        name: string;
-      }) => typeof fixtures.batchWithSuccess.payload1;
-    };
-    const newClient = new JsonRpcClient<MyApiContract>({
-      idGeneratorFn: uuid.v4,
-      url: JSONRPC_URL,
-    });
     expect.assertions(2);
     mockResponse(fixtures.batchWithSuccess.response);
 
-    const [r1, r2] = await newClient.execBatch([
+    const [r1, r2] = await clientContract.execBatch([
       { method: "getFoo", params: { fooId: 123 } },
       { method: "getBar" },
     ] as const);
@@ -84,29 +111,6 @@ describe("contracts", () => {
         fixtures.batchWithSuccess.payload2.some_data
       );
     }
-
-    /** dtslint example */
-
-    // @ts-expect-error
-    newClient.execBatch([
-      { method: "getBar", params: { name: "foo" } },
-    ] as const);
-
-    // @ts-expect-error
-    newClient.execBatch([
-      { method: "getBar", params: { name: "foo" } },
-      { method: "getFoo", params: { name: "foo" } }, // should use the write param
-    ] as const);
-
-    // @ts-expect-error
-    newClient.execBatch([
-      { method: "getFoo", params: { name: "foo" } }, // should be undefined
-    ] as const);
-
-    // no error
-    newClient.execBatch([
-      { method: "getFoo" }, // should be undefined
-    ]);
   });
 });
 
