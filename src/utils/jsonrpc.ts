@@ -2,14 +2,11 @@ import { Either, ErrorResponse, SuccessResponse } from "./either";
 import { hasProperties, isObject } from "./exists";
 
 export interface JsonRpcError {
+  jsonrpc: "2.0";
   code: number;
   message: string;
-  data?: any;
+  id: null | string | number;
 }
-
-export const isJsonRpcError = (v: object): v is JsonRpcError => {
-  return hasProperties(v, "code", "message");
-};
 
 interface IJsonRpcResponse {
   jsonrpc: "2.0";
@@ -54,13 +51,23 @@ export function assertJsonRpcReply<T>(
   }
   if (!hasProperties(v, "jsonrpc")) {
     throw new InvalidJsonRpcResponseError(
-      `Invalid response ${JSON.stringify(v, undefined, 2)}`
+      `Response should contain "jsonrpc: "2.0""`
+    );
+  }
+  if (!hasProperties(v, "id")) {
+    throw new InvalidJsonRpcResponseError(
+      `Response must have an ID property (even if that ID is null)`
+    );
+  }
+  if (v.id === undefined) {
+    throw new InvalidJsonRpcResponseError(
+      "Response ID should be null rather than undefined"
     );
   }
   if (hasProperties(v, "result", "error")) {
     if (v.result && v.error) {
       throw new InvalidJsonRpcResponseError(
-        "Result and error member should not exist together (https://www.jsonrpc.org/specification#5)"
+        "Result and error member should not exist together"
       );
     }
   }

@@ -4,4 +4,5 @@ export const response = {
     code: -32601,
     message: "Method not found",
   },
+  id: null,
 };
