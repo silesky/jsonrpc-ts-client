@@ -3,12 +3,11 @@ import {
   assertJsonRpcReply,
   assertJsonRpcReplyBatch,
   JsonRpcCall,
-  JsonRpcError,
   JsonRpcParams,
   jsonRpcResponseToEither,
+  JsonRpcEitherResponse,
 } from "./utils/jsonrpc";
-import { Either } from "./utils/either";
-import { GetElementByIndex, MapEither } from "./utils/ts";
+import { GetElementByIndex, MapBatchResult } from "./utils/ts";
 import { debug } from "./utils/debug";
 
 export interface JsonRpcConfigOptions {
@@ -87,8 +86,7 @@ type GetAllResponses<
   Api extends JsonRpcApiContract,
   Calls extends readonly Call<any, any>[]
 > = {
-  [Index in keyof Calls]: Either<
-    JsonRpcError,
+  [Index in keyof Calls]: JsonRpcEitherResponse<
     ReturnType<
       GetElementByIndex<Api, GetElementByIndex<Calls[Index], "method">>
     >
@@ -127,21 +125,21 @@ export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
     params: GetParamsFromContract<Api, M>,
     id?: string,
     configOverrides?: Partial<JsonRpcConfigOptions>
-  ): Promise<Either<JsonRpcError, GetResponseFromContract<Api, M>>>;
+  ): Promise<JsonRpcEitherResponse<GetResponseFromContract<Api, M>>>;
 
   async exec<M extends keyof Api = any>(
     method: GetParamsFromContract<Api, M> extends undefined ? M : never,
     params?: undefined,
     id?: string,
     configOverrides?: Partial<JsonRpcConfigOptions>
-  ): Promise<Either<JsonRpcError, GetResponseFromContract<Api, M>>>;
+  ): Promise<JsonRpcEitherResponse<GetResponseFromContract<Api, M>>>;
 
   async exec<Response>(
     method: Api extends EmptyObject ? string : never, // maybe add a branded type??
     params?: JsonRpcParams,
     id?: string,
     configOverrides?: Partial<JsonRpcConfigOptions>
-  ): Promise<Either<JsonRpcError, Response>>;
+  ): Promise<JsonRpcEitherResponse<Response>>;
 
   /**
   /**
@@ -203,7 +201,7 @@ export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
 
   async execBatch<Result extends unknown[]>(
     calls: Call<JsonRpcApiContract, string>[]
-  ): Promise<MapEither<Result>>;
+  ): Promise<MapBatchResult<Result>>;
 
   async execBatch(calls: Call<any, any>[]): Promise<unknown[]> {
     try {

@@ -1,4 +1,3 @@
-import { Either, ErrorResponse, SuccessResponse } from "./either";
 import { hasProperties, isObject } from "./exists";
 
 export interface JsonRpcError {
@@ -103,10 +102,57 @@ export class JsonRpcCall<Params extends JsonRpcParams> {
   ) {}
 }
 
+abstract class EitherApi {
+  isError<Success>(
+    this: JsonRpcEitherResponse<Success>
+  ): this is ErrorResponse<Error> {
+    return this.type === "error";
+  }
+
+  isSuccess<Success>(
+    this: JsonRpcEitherResponse<Success>
+  ): this is SuccessResponse<Success> {
+    return !this.isError();
+  }
+}
+
+type JsonRpcIdFromApi = string | number | null;
+interface IJsonRpc {
+  readonly id?: string | number;
+}
+/**
+ * Class representing "right" (success case)
+ */
+export class SuccessResponse<T> extends EitherApi implements IJsonRpc {
+  public readonly type = "success";
+  public id?: IJsonRpc["id"];
+  constructor(public result: T, id?: JsonRpcIdFromApi) {
+    super();
+    this.id = id ?? undefined;
+  }
+}
+
+/**
+ * Class representing "left" (failure case)
+ */
+export class ErrorResponse<T> extends EitherApi implements IJsonRpc {
+  public readonly type = "error";
+  public id?: IJsonRpc["id"];
+  constructor(public error: T, id?: JsonRpcIdFromApi) {
+    super();
+    this.id = id ?? undefined;
+  }
+}
+
+export type JsonRpcEitherResponse<T> =
+  | SuccessResponse<T>
+  | ErrorResponse<JsonRpcError>;
+
+export const id = <T>(v: T): T => v;
 export const jsonRpcResponseToEither = <T>(
   response: JsonRpcResponse<T>
-): Either<JsonRpcError, T> => {
+): JsonRpcEitherResponse<T> => {
   return isJsonRpcResponseError(response)
-    ? new ErrorResponse(response.error)
-    : new SuccessResponse(response.result);
+    ? new ErrorResponse(response.error, response.id)
+    : new SuccessResponse(response.result, response.id);
 };
