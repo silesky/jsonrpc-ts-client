@@ -53,8 +53,8 @@ if (response.isSuccess()) { // returns an JsonRpcYeah<Result>
 ```
 
 
-## API Contract Declaration Support (Recommended option)
-You can make [batch requests](https://www.jsonrpc.org/specification#batch) per the JSON-RPC specification.
+## API Contract Declaration Support (API is still experimental)
+
 ```ts
 
 import JSONRPC from 'jsonrpc-ts-client'
@@ -81,6 +81,7 @@ if (result.isSuccess()) {
 
 ```
 # Batch Support
+You can make [batch requests](https://www.jsonrpc.org/specification#batch) per the JSON-RPC specification.
 ![Basic Example](docs/img/batch-example.gif)
 ```ts
 import JSONRPC from 'jsonrpc-ts-client'
