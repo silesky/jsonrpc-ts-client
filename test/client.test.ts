@@ -6,6 +6,10 @@ import * as uuid from "uuid";
 import * as fixtures from "./fixtures";
 import { JsonRpcApiContract } from "../src/client";
 
+const fail = () => {
+  throw new Error("Test Fail");
+};
+
 let client!: JsonRpcClient;
 beforeEach(() => {
   client = new JsonRpcClient({
@@ -31,7 +35,7 @@ describe("contracts", () => {
   });
 
   /* skip intentionally - dtslint is a better tool. */
-  test.skip("[Typings]: batch", () => {
+  test.skip("[Typings]: batch", async () => {
     // should work with interface if
     interface IContract extends JsonRpcApiContract {
       hello: () => { name: string };
@@ -65,11 +69,47 @@ describe("contracts", () => {
       { method: "getBar", params: { name: "foo" } },
     ] as const);
 
+    const [r1, r2] = await clientContract.execBatch([
+      { method: "getBar" },
+      { method: "getFoo", params: { fooId: 123 } }, // should use the write param
+    ] as const);
+    r1.isSuccess() && r1.result.some_data;
+    r2.isSuccess() && r2.result.name;
+
+    // test if enums are supported
+    enum Methods {
+      GET_BAR = "getBar",
+      GET_FOO = "getFoo",
+    }
+    clientContract.execBatch([
+      { method: Methods.GET_BAR },
+      { method: Methods.GET_FOO, params: { fooId: 123 } }, // should use the write param
+    ] as const);
+
     // @ts-expect-error
     clientContract.execBatch([
-      { method: "getBar", params: { name: "foo" } },
-      { method: "getFoo", params: { name: "foo" } }, // should use the write param
+      { method: Methods.GET_BAR },
+      { method: Methods.GET_FOO, params: { fooxId: 123 } }, // should use the write param
     ] as const);
+    /*****/
+
+    r1.isSuccess() && r1.result.some_data;
+    r2.isSuccess() && r2.result.name;
+    // if non-readonly object is passed, return a union
+    const responses = await clientContract.execBatch([
+      { method: "getBar" },
+      { method: "getFoo", params: { fooId: 123 } }, // should use the write param
+    ]);
+    type AllResultsDtos = ReturnType<MyApiContract[keyof MyApiContract]>;
+    type GetFooResultDto = ReturnType<MyApiContract["getFoo"]>; // normally this would be defined separately like 'GetFooResponseDto'
+    function isGetFoo(response: AllResultsDtos): response is GetFooResultDto {
+      return "name" in response;
+    }
+    responses.forEach((r) => {
+      if (r.isSuccess() && isGetFoo(r.result)) {
+        console.log(r.result.name);
+      }
+    });
 
     // @ts-expect-error
     clientContract.execBatch([
@@ -83,7 +123,6 @@ describe("contracts", () => {
   });
 
   it("handles contracts", async () => {
-    expect.assertions(1);
     mockResponse(fixtures.withSuccess.response);
 
     const response = await clientContract.exec("getFoo", { fooId: 123 });
@@ -94,7 +133,6 @@ describe("contracts", () => {
   });
 
   it("handles batch", async () => {
-    expect.assertions(4);
     mockResponse(fixtures.batchWithSuccess.response);
 
     const [r1, r2] = await clientContract.execBatch([
@@ -105,6 +143,8 @@ describe("contracts", () => {
     if (r1.isSuccess()) {
       expect(r1.id).toBe(fixtures.batchWithSuccess.response1.id);
       expect(r1.result.name).toBe(fixtures.batchWithSuccess.payload1.name);
+    } else {
+      fail();
     }
 
     if (r2.isSuccess()) {
@@ -112,6 +152,8 @@ describe("contracts", () => {
       expect(r2.result.some_data).toBe(
         fixtures.batchWithSuccess.payload2.some_data
       );
+    } else {
+      fail();
     }
   });
 });
@@ -133,7 +175,6 @@ it("handles valid jsonrpc success responses", async () => {
 });
 
 it("handles valid jsonrpc error responses", async () => {
-  expect.assertions(1);
   mockResponse(fixtures.withError.response);
   const foo = await client.exec("my_not_found_method", {
     bars: 123,
@@ -143,11 +184,12 @@ it("handles valid jsonrpc error responses", async () => {
       error: fixtures.withError.response.error,
       type: "error",
     });
+  } else {
+    fail();
   }
 });
 
 it("does not throw errors with jsonrpc error responses with 5xx status code", async () => {
-  expect.assertions(1);
   mockResponse(fixtures.withError.response, { status: 500 });
   const foo = await client.exec("my_not_found_method", { foo: 123 });
   if (foo.isError()) {
@@ -155,11 +197,12 @@ it("does not throw errors with jsonrpc error responses with 5xx status code", as
       error: fixtures.withError.response.error,
       type: "error",
     });
+  } else {
+    fail();
   }
 });
 
 it("does not throw errors with jsonrpc error responses with 4xx status code", async () => {
-  expect.assertions(1);
   mockResponse(fixtures.withError.response, { status: 404 });
   const foo = await client.exec("my_not_found_method", { foo: 123 });
   if (foo.isError()) {
@@ -167,11 +210,12 @@ it("does not throw errors with jsonrpc error responses with 4xx status code", as
       error: fixtures.withError.response.error,
       type: "error",
     });
+  } else {
+    fail();
   }
 });
 
 it("handles batch jsonrpc success responses", async () => {
-  expect.assertions(2);
   mockResponse(fixtures.batchWithSuccess.response);
   const responses = await client.execBatch<
     [
@@ -185,29 +229,33 @@ it("handles batch jsonrpc success responses", async () => {
   const [r1, r2] = responses;
   if (r1.isSuccess()) {
     expect(r1.result.name).toBe(fixtures.batchWithSuccess.payload1.name);
+  } else {
+    fail();
   }
   if (r2.isSuccess()) {
     expect(r2.result.some_data).toBe(
       fixtures.batchWithSuccess.payload2.some_data
     );
+  } else {
+    fail();
   }
 });
 
 it("throws errors in response to a network error or response that does not match the jsonrpc spec", async () => {
-  expect.assertions(1);
   mockResponse({ foo: "bad-jsonrpc-response" }, { status: 400 });
   try {
     await client.exec("/foo/bar", { foo: 123 });
+    throw Error();
   } catch (err: any) {
     expect(err.message).toContain("www.jsonrpc.org/specification");
   }
 });
 
 it("throws errors in response to a 200 response that does not match the jsonrpc spec", async () => {
-  expect.assertions(1);
   mockResponse({ foo: "bad-jsonrpc-response" }, { status: 200 });
   try {
     await client.exec<{ foo: number }>("/foo/bar", { foo: 123 });
+    throw Error();
   } catch (err: any) {
     expect(err.message).toContain("www.jsonrpc.org/specification");
   }
@@ -228,7 +276,6 @@ describe("configuration", () => {
     });
   });
   it("will not pass an ID if no generator function nor arguments are passed in ", async () => {
-    // expect.assertions(2);
     client = new JsonRpcClient({
       url: JSONRPC_URL,
       idGeneratorFn: undefined,
@@ -253,6 +300,8 @@ describe("configuration", () => {
         type: "success",
         id: fixtures.withSuccess.response.id,
       });
+    } else {
+      fail();
     }
   });
 
