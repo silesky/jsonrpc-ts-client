@@ -124,6 +124,7 @@ it("handles valid jsonrpc success responses", async () => {
     response.result.foo; // should not error
     expect(response).toEqual({
       result: fixtures.withSuccess.payload,
+      id: fixtures.withSuccess.response.id,
       type: "success",
     });
   }
@@ -221,6 +222,7 @@ describe("configuration", () => {
     expect(foo).toEqual({
       result: fixtures.withSuccess.payload,
       type: "success",
+      id: 1,
     });
   });
   it("will not pass an ID if no generator function nor arguments are passed in ", async () => {
@@ -237,6 +239,7 @@ describe("configuration", () => {
     expect(foo).toEqual({
       result: fixtures.withSuccess.payload,
       type: "success",
+      id: fixtures.withSuccess.response.id,
     });
   });
   it("will not send an ID if no id generator funtion is passed", async () => {
@@ -246,6 +249,7 @@ describe("configuration", () => {
       expect(foo).toEqual({
         result: fixtures.withSuccess.payload,
         type: "success",
+        id: fixtures.withSuccess.response.id,
       });
     }
   });

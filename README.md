@@ -39,7 +39,7 @@ const client = new JSONRPC({
 })
 
 const response = await client.exec<UserDto>('my_method', { userId: 123 }); // sends payload {jsonrpc: '2.0',  params: ...}
-if (response.isSuccess()) { // returns an Either<JsonRpcError, Result>
+if (response.isSuccess()) { // returns an JsonRpcYeah<Result>
   console.log(response.result.name)
   console.log(response.result.occupation)
 } else if (response.isError()) {
@@ -47,10 +47,6 @@ if (response.isSuccess()) { // returns an Either<JsonRpcError, Result>
   console.log(result.error.message) // e.g. "Invalid Params"
   console.log(result.error.code) // e.g -32603
 }
-
-// as an "escape valve", you can unwrap the result response by throwing an error.
-const result = response.unsafeCoerce()
-console.log(result.name)
 
 ```
 
