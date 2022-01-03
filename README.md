@@ -1,5 +1,5 @@
 ![Build Status](https://img.shields.io/github/workflow/status/silesky/jsonrpc-ts-client/CI/main?label=build)
-### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification). The goal of this project is to provide maximum ergonomics for typescript projects (autocomplete all the things!). This app could be used standalone, or as a dependency for an SDK generator. Currently, the only transport supported is HTTP.
+### A modern isomorphic typescript client for [JSON-RPC 2.0](https://www.jsonrpc.org/specification). The goal of this project is to provide maximum ergonomics for typescript projects (autocomplete all the things!). This app could be used standalone, or as a dependency for an SDK generator.
 
 
 > Warning: this project is in alpha, and the API is subject to change.
@@ -53,10 +53,10 @@ if (response.isSuccess()) { // returns an JsonRpcYeah<Result>
 ```
 
 
-## API Contract Declaration Support (API is still experimental)
+
+## API Contract Declaration Support
 
 ```ts
-
 import JSONRPC from 'jsonrpc-ts-client'
 
 
@@ -78,11 +78,14 @@ if (result.isSuccess()) {
   console.log(result.user.name)
   console.log(result.user.id)
 }
-
 ```
-# Batch Support
+# Batch Support [Experimental API]
 You can make [batch requests](https://www.jsonrpc.org/specification#batch) per the JSON-RPC specification.
+
+> Note: This API is still in flex and may change slightly in the future versions.
+
 ![Basic Example](docs/img/batch-example.gif)
+
 ```ts
 import JSONRPC from 'jsonrpc-ts-client'
 
@@ -109,6 +112,8 @@ if (config.isSuccesss()) {
 }
 
 ```
+
+
 
 ##  ID Generation
 Generate IDs automatically, and/or override or set them on a per-request basis.
