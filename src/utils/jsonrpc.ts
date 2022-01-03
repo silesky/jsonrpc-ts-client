@@ -4,12 +4,12 @@ export interface JsonRpcError {
   jsonrpc: "2.0";
   code: number;
   message: string;
-  id: null | string | number;
+  id: JsonRpcIdFromApi;
 }
 
 interface IJsonRpcResponse {
   jsonrpc: "2.0";
-  id?: string;
+  id?: JsonRpcIdFromApi;
 }
 
 export interface JsonRpcResponseSuccess<Data> extends IJsonRpcResponse {
