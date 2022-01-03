@@ -94,7 +94,7 @@ describe("contracts", () => {
   });
 
   it("handles batch", async () => {
-    expect.assertions(2);
+    expect.assertions(4);
     mockResponse(fixtures.batchWithSuccess.response);
 
     const [r1, r2] = await clientContract.execBatch([
@@ -103,11 +103,13 @@ describe("contracts", () => {
     ] as const);
 
     if (r1.isSuccess()) {
+      expect(r1.id).toBe(fixtures.batchWithSuccess.response1.id);
       expect(r1.result.name).toBe(fixtures.batchWithSuccess.payload1.name);
     }
 
     if (r2.isSuccess()) {
-      expect(r2.result.some_data).toEqual(
+      expect(r2.id).toBe(fixtures.batchWithSuccess.response2.id);
+      expect(r2.result.some_data).toBe(
         fixtures.batchWithSuccess.payload2.some_data
       );
     }
