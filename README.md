@@ -96,6 +96,11 @@ type MyApiContract = {
   getProduct: (productId: string) => ProductDto,
 };
 
+const client = new JsonRpcClient<MyApiContract>({
+  idGeneratorFn: uuid.v4,
+  url: JSONRPC_URL,
+});
+
 const [user, config] = await client.execBatch([
       { method: "getUser", params: { userId: 123 } },
       { method: "getConfig" },
