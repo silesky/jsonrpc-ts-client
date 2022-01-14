@@ -67,7 +67,7 @@ type MyApiContract = {
 };
 
 // pass in your api contract to get type-safety and autocomplete
-const client = new JsonRpcClient<MyApiContract>({
+const client = new JSONRPC<MyApiContract>({
   idGeneratorFn: uuid.v4,
   url: JSONRPC_URL,
 });
