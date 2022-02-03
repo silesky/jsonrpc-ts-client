@@ -14,6 +14,7 @@ export interface JsonRpcConfigOptions {
   url: string;
   headers?: Record<string, string>;
   idGeneratorFn?: () => string;
+  maxRetries?: number;
 }
 
 // intentionally separate the final configuration from the arguments used for its instantiation, since these could easily deviate.
@@ -21,10 +22,12 @@ export class JsonRpcConfig implements JsonRpcConfigOptions {
   url: JsonRpcConfigOptions["url"];
   headers?: JsonRpcConfigOptions["headers"];
   idGeneratorFn?: JsonRpcConfigOptions["idGeneratorFn"];
+  maxRetries: number;
 
   constructor(opts: JsonRpcConfigOptions) {
     this.url = opts.url;
     this.headers = opts.headers;
+    this.maxRetries = opts.maxRetries ?? 0;
     this.idGeneratorFn = opts.idGeneratorFn;
     this.validate();
   }
@@ -98,8 +101,8 @@ type GetAllResponses<
  */
 export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
   #client: AxiosInstance;
+  #retryCount = 0;
   config: JsonRpcConfig;
-
   constructor(
     // Intentionally re-defining some options-inline for better intellisense.
     config: JsonRpcConfigOptions
@@ -181,6 +184,12 @@ export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
       debug(axiosResponse);
 
       const response = jsonRpcResponseToEither(axiosData);
+      if (response.isError() && this.config.maxRetries > this.#retryCount) {
+        this.#retryCount += 1;
+        const retriesLeft = this.config.maxRetries - this.#retryCount;
+        debug(`Retrying... count: ${this.#retryCount}... ${retriesLeft} to go`);
+        return this.exec(method, params, id, configOverrides);
+      }
       return response;
     } catch (err) {
       debug(err);
@@ -223,7 +232,7 @@ export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
       const axiosData = axiosResponse.data;
       assertJsonRpcReplyBatch(axiosData);
 
-      debug(axiosResponse);
+      debug(axiosResponse.data);
 
       const response = axiosData.map(jsonRpcResponseToEither);
       return response;

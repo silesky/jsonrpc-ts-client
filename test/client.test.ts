@@ -18,6 +18,55 @@ beforeEach(() => {
   });
 });
 
+describe("retries", () => {
+  it("will retry automatically", async () => {
+    jest.setTimeout(1000);
+    client = new JsonRpcClient({
+      idGeneratorFn: uuid.v4,
+      url: JSONRPC_URL,
+      maxRetries: 2,
+    });
+    mockResponse(fixtures.withError.response);
+    const pendingRequest = waitForRequest(2);
+    const bar = await client.exec("my_not_found_method", {
+      bars: 123,
+    });
+    const req = (await pendingRequest) as any;
+    expect(req.length).toBe(3);
+    if (bar.isError()) {
+      expect(bar).toEqual({
+        error: fixtures.withError.response.error,
+        type: "error",
+      });
+    } else {
+      fail();
+    }
+  });
+
+  it("will not retry automatically", async () => {
+    client = new JsonRpcClient({
+      idGeneratorFn: uuid.v4,
+      url: JSONRPC_URL,
+      maxRetries: 0,
+    });
+    mockResponse(fixtures.withError.response);
+    const pendingRequest = waitForRequest(2);
+    const bar = await client.exec("my_not_found_method", {
+      bars: 123,
+    });
+    const req = (await pendingRequest) as any;
+    expect(req.length).toBe(1);
+    if (bar.isError()) {
+      expect(bar).toEqual({
+        error: fixtures.withError.response.error,
+        type: "error",
+      });
+    } else {
+      fail();
+    }
+  });
+});
+
 describe("contracts", () => {
   type MyApiContract = {
     getFoo: (params: {

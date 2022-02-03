@@ -1,5 +1,5 @@
 import { setupServer } from "msw/node";
-import { rest } from "msw";
+import { DefaultRequestBody, MockedRequest, rest } from "msw";
 
 // instantiate server without handlers
 export const server = setupServer();
@@ -18,10 +18,21 @@ export const mockResponse = (data: any, options: Options = {}) => {
   );
 };
 
-export async function waitForRequest() {
+export async function waitForRequest(numberOfRetries = 0, maxTimeout = 2) {
+  let timeout = 0;
+  const requests: MockedRequest<DefaultRequestBody>[] = [];
   return new Promise((resolve, reject) => {
     server.events.on("request:match", (req) => {
-      resolve(req);
+      requests.push(req);
+      setInterval(() => {
+        timeout += 1;
+        if (timeout > maxTimeout) {
+          return resolve(requests);
+        }
+      }, 1000);
+      if (requests.length === numberOfRetries + 1) {
+        return resolve(requests.length === 1 ? requests[0] : requests);
+      }
     });
     server.events.on("request:unhandled", (req) => {
       reject(
