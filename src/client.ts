@@ -10,11 +10,22 @@ import {
 import { GetElementByIndex, MapBatchResult } from "./utils/ts";
 import { debug } from "./utils/debug";
 
+const delay = async (ms: number): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), ms);
+  });
+};
+
+type RetryBackoffStrategy = "linear" | "exponential";
 export interface JsonRpcConfigOptions {
   url: string;
   headers?: Record<string, string>;
   idGeneratorFn?: () => string;
   maxRetries?: number;
+  backoffStrategy?: RetryBackoffStrategy;
+  // Number in ms if backoffStrategy is 'linear', or initial retry delay if backoff strategy is 'exponential'
+  // if initial retry delay is 0 and the backoff strategy is exponential, set this to 100
+  retryDelay?: number;
 }
 
 // intentionally separate the final configuration from the arguments used for its instantiation, since these could easily deviate.
@@ -22,12 +33,16 @@ export class JsonRpcConfig implements JsonRpcConfigOptions {
   url: JsonRpcConfigOptions["url"];
   headers?: JsonRpcConfigOptions["headers"];
   idGeneratorFn?: JsonRpcConfigOptions["idGeneratorFn"];
+  backoffStrategy: RetryBackoffStrategy;
+  retryDelay: number;
   maxRetries: number;
 
   constructor(opts: JsonRpcConfigOptions) {
     this.url = opts.url;
     this.headers = opts.headers;
     this.maxRetries = opts.maxRetries ?? 0;
+    this.backoffStrategy = opts.backoffStrategy ?? "linear";
+    this.retryDelay = opts.retryDelay ?? 0;
     this.idGeneratorFn = opts.idGeneratorFn;
     this.validate();
   }
@@ -188,6 +203,7 @@ export class JsonRpcClient<Api extends JsonRpcApiContract = EmptyObject> {
         this.#retryCount += 1;
         const retriesLeft = this.config.maxRetries - this.#retryCount;
         debug(`Retrying... count: ${this.#retryCount}... ${retriesLeft} to go`);
+        await delay(this.config.retryDelay);
         return this.exec(method, params, id, configOverrides);
       }
       return response;
